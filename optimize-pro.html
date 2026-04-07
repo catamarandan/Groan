@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GROAN™ Optimization Pro</title>
+
+<style>
+body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
+.container { max-width:900px; margin:auto; }
+.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
+input { width:100%; padding:6px; margin:4px 0; }
+button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>GROAN™ Optimization Pro</h1>
+
+<div class="card">
+Temperature <input id="T" value="29">
+Ωarag <input id="A" value="3.2">
+Nutrients <input id="N" value="6">
+Sediment <input id="S" value="5">
+Light <input id="L" value="7">
+</div>
+
+<div class="card">
+Time (months) <input id="time" value="12">
+<button onclick="run()">Find Best Strategy</button>
+<div id="output"></div>
+</div>
+
+</div>
+
+<script>
+
+function simulate(T,A,N,S,L,months){
+
+let stress =
+Math.max(0,T-27)*0.4 +
+(4-A)*0.6 +
+N*0.3 +
+S*0.4 -
+L*0.2;
+
+let calc = Math.max(0,(A*2)-stress);
+
+let health=100;
+
+for(let i=0;i<months;i++){
+health += (calc*0.8) - (stress*1.5);
+if(health>100) health=100;
+if(health<0) health=0;
+}
+
+return Math.round(health);
+}
+
+function run(){
+
+let T0 = parseFloat(T.value);
+let A0 = parseFloat(A.value);
+let N0 = parseFloat(N.value);
+let S0 = parseFloat(S.value);
+let L0 = parseFloat(L.value);
+let months = parseInt(time.value);
+
+let base = simulate(T0,A0,N0,S0,L0,months);
+
+let actions = [
+{n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
+{n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
+{n:"Reduce Temp", f:(x)=>({...x,T:x.T-1})},
+{n:"Increase Ωarag", f:(x)=>({...x,A:x.A+0.5})}
+];
+
+let results = [];
+
+for(let i=1;i<(1<<actions.length);i++){
+
+let state={T:T0,A:A0,N:N0,S:S0};
+let names=[];
+
+for(let j=0;j<actions.length;j++){
+if(i&(1<<j)){
+state=actions[j].f(state);
+names.push(actions[j].n);
+}
+}
+
+let score=simulate(state.T,state.A,state.N,state.S,L0,months);
+
+results.push({combo:names.join(" + "),value:score});
+}
+
+results.sort((a,b)=>b.value-a.value);
+
+output.innerHTML=`
+<b>Baseline:</b> ${base}<br><br>
+<b>Best Strategy:</b><br>
+${results[0].combo} → ${results[0].value}<br><br>
+<b>Top 5 Strategies:</b><br>
+${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
+`;
+
+}
+
+</script>
+
+</body>
+</html>
