@@ -3,139 +3,191 @@
 <head>
 <meta charset="UTF-8">
 <title>GROAN™ Decision Engine</title>
-
 <style>
-body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
-.container { max-width:1000px; margin:auto; }
-.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
-input { width:100%; padding:6px; margin:4px 0; }
-button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
-canvas { margin-top:10px; }
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1e2d;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+.card {
+    background: #132f45;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    background: #00bcd4;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+canvas {
+    margin-top: 15px;
+    background: #0b1e2d;
+    border-radius: 6px;
+}
+a {
+    color: #00bcd4;
+    text-decoration: none;
+    margin-right: 15px;
+}
+.nav {
+    margin-bottom: 20px;
+}
+.checkbox-group label {
+    display: block;
+    margin: 8px 0;
+}
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
 </style>
-
 </head>
 <body>
 
 <div class="container">
 
-<h1>GROAN™ Intervention Engine</h1>
+<div class="nav">
+    <a href="index.html">Base Engine</a>
+    <a href="compare.html">Compare</a>
+    <a href="decision.html">Decision</a>
+    <a href="optimize.html">Optimize</a>
+</div>
+
+<h1>GROAN™ Intervention Decision Engine</h1>
 
 <div class="card">
-Temperature <input id="T" value="29">
-Ωarag <input id="A" value="3.2">
-Nutrients <input id="N" value="6">
-Sediment <input id="S" value="5">
-Light <input id="L" value="7">
+    <label>Temperature</label>
+    <input id="T" value="29">
+    <label>Ωarag</label>
+    <input id="A" value="3.2">
+    <label>Nutrients</label>
+    <input id="N" value="6">
+    <label>Sediment</label>
+    <input id="S" value="5">
+    <label>Light</label>
+    <input id="L" value="7">
+</div>
+
+<div class="card checkbox-group">
+    <h3>Interventions</h3>
+    <label><input type="checkbox" id="fixN"> Reduce Nutrients</label>
+    <label><input type="checkbox" id="fixS"> Reduce Sediment</label>
+    <label><input type="checkbox" id="fixT"> Reduce Temperature</label>
+    <label><input type="checkbox" id="boostA"> Increase Ωarag</label>
 </div>
 
 <div class="card">
-<h3>Interventions</h3>
-<label><input type="checkbox" id="fixN"> Reduce Nutrients</label><br>
-<label><input type="checkbox" id="fixS"> Reduce Sediment</label><br>
-<label><input type="checkbox" id="fixT"> Reduce Temperature</label><br>
-<label><input type="checkbox" id="boostA"> Increase Ωarag</label>
-</div>
-
-<div class="card">
-Time (months) <input id="time" value="12">
-<button onclick="run()">Simulate Intervention</button>
-
-<div id="output"></div>
-<canvas id="chart" width="900" height="300"></canvas>
+    <label>Time (months)</label>
+    <input id="time" value="12">
+    <button onclick="run()">Simulate Intervention</button>
+    <div id="output" style="margin-top:15px;"></div>
+    <canvas id="chart" width="900" height="300"></canvas>
 </div>
 
 </div>
 
 <script>
+function simulate(T, A, N, S, L, months) {
+    const stress =
+        Math.max(0, T - 27) * 0.4 +
+        (4 - A) * 0.6 +
+        N * 0.3 +
+        S * 0.4 -
+        L * 0.2;
 
-function simulate(T,A,N,S,L,months){
+    const calc = Math.max(0, (A * 2) - stress);
 
-let stress =
-Math.max(0,T-27)*0.4 +
-(4-A)*0.6 +
-N*0.3 +
-S*0.4 -
-L*0.2;
+    let health = 100;
+    const traj = [];
 
-let calc = Math.max(0,(A*2)-stress);
+    for (let i = 0; i < months; i++) {
+        health += (calc * 0.8) - (stress * 1.5);
+        if (health > 100) health = 100;
+        if (health < 0) health = 0;
+        traj.push(Math.round(health));
+    }
 
-let health=100;
-let traj=[];
-
-for(let i=0;i<months;i++){
-health += (calc*0.8) - (stress*1.5);
-if(health>100) health=100;
-if(health<0) health=0;
-traj.push(health);
+    return { traj, final: Math.round(health) };
 }
 
-return {traj,final:Math.round(health)};
+function run() {
+    const T = parseFloat(document.getElementById("T").value);
+    const A = parseFloat(document.getElementById("A").value);
+    const N = parseFloat(document.getElementById("N").value);
+    const S = parseFloat(document.getElementById("S").value);
+    const L = parseFloat(document.getElementById("L").value);
+    const months = parseInt(document.getElementById("time").value, 10);
+
+    const base = simulate(T, A, N, S, L, months);
+
+    let T2 = T;
+    let A2 = A;
+    let N2 = N;
+    let S2 = S;
+
+    if (document.getElementById("fixN").checked) N2 -= 2;
+    if (document.getElementById("fixS").checked) S2 -= 2;
+    if (document.getElementById("fixT").checked) T2 -= 1;
+    if (document.getElementById("boostA").checked) A2 += 0.5;
+
+    const improved = simulate(T2, A2, N2, S2, L, months);
+    const gain = improved.final - base.final;
+
+    document.getElementById("output").innerHTML = `
+        <b>Baseline Health:</b> ${base.final}<br>
+        <b>Improved Health:</b> ${improved.final}<br><br>
+        <b>Impact:</b> ${gain > 0 ? "+" : ""}${gain}
+    `;
+
+    draw(base.traj, improved.traj);
 }
 
-function run(){
+function draw(A, B) {
+    const c = document.getElementById("chart");
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, c.width, c.height);
 
-let T = parseFloat(document.getElementById("T").value);
-let A = parseFloat(document.getElementById("A").value);
-let N = parseFloat(document.getElementById("N").value);
-let S = parseFloat(document.getElementById("S").value);
-let L = parseFloat(document.getElementById("L").value);
-let months = parseInt(document.getElementById("time").value);
+    const h = c.height;
+    const w = c.width;
 
-// baseline
-let base = simulate(T,A,N,S,L,months);
+    ctx.beginPath();
+    for (let i = 0; i < A.length; i++) {
+        const x = (i / (A.length - 1 || 1)) * w;
+        const y = h - (A[i] / 100 * h);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "orange";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-// apply interventions
-let T2=T, A2=A, N2=N, S2=S;
-
-if(fixN.checked) N2 -= 2;
-if(fixS.checked) S2 -= 2;
-if(fixT.checked) T2 -= 1;
-if(boostA.checked) A2 += 0.5;
-
-let improved = simulate(T2,A2,N2,S2,L,months);
-
-let gain = improved.final - base.final;
-
-output.innerHTML = `
-<b>Baseline Health:</b> ${base.final}<br>
-<b>Improved Health:</b> ${improved.final}<br><br>
-
-<b>Impact:</b> ${gain > 0 ? "+" : ""}${gain}
-`;
-
-draw(base.traj, improved.traj);
+    ctx.beginPath();
+    for (let i = 0; i < B.length; i++) {
+        const x = (i / (B.length - 1 || 1)) * w;
+        const y = h - (B[i] / 100 * h);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 }
-
-function draw(A,B){
-
-let c = document.getElementById("chart");
-let ctx = c.getContext("2d");
-ctx.clearRect(0,0,c.width,c.height);
-
-let h=c.height,w=c.width;
-
-// baseline
-ctx.beginPath();
-for(let i=0;i<A.length;i++){
-let x=i/A.length*w;
-let y=h-(A[i]/100*h);
-if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-}
-ctx.strokeStyle="orange";
-ctx.stroke();
-
-// improved
-ctx.beginPath();
-for(let i=0;i<B.length;i++){
-let x=i/B.length*w;
-let y=h-(B[i]/100*h);
-if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-}
-ctx.strokeStyle="lime";
-ctx.stroke();
-
-}
-
 </script>
 
 </body>
