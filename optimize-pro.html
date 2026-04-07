@@ -10,7 +10,6 @@ body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
 .card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
 input { width:100%; padding:6px; margin:4px 0; }
 button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
-.status { font-size:18px; font-weight:bold; margin-top:10px; }
 </style>
 
 </head>
@@ -96,23 +95,23 @@ if(data.Leff < 0.3) drivers.push("low light");
 let status, msg, color;
 
 if(h > 80){
-status = "STABLE";
-color = "#00e676"; // green
+status = "🟢 STABLE";
+color = "#00e676";
 msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
 }
 else if(h > 60){
-status = "WATCH";
-color = "#ffeb3b"; // yellow
+status = "🟡 WATCH";
+color = "#ffeb3b";
 msg = "Early signs of stress are emerging.";
 }
 else if(h > 40){
-status = "WARNING";
-color = "#ff9800"; // orange
+status = "🟠 WARNING";
+color = "#ff9800";
 msg = "Reef health is declining. Intervention recommended.";
 }
 else{
-status = "CRITICAL";
-color = "#ff1744"; // red
+status = "🔴 CRITICAL";
+color = "#ff1744";
 msg = "Rapid degradation detected. Immediate action required.";
 }
 
@@ -127,7 +126,7 @@ if(drivers.includes("low aragonite")) rec += " Address acidification risks.";
 if(drivers.includes("low light")) rec += " Reduce turbidity.";
 
 return `
-<div style="font-size:20px;font-weight:bold;color:${color};">
+<div style="font-size:22px;font-weight:bold;color:${color};">
 ${status}
 </div>
 <br>${msg}${driverText}
