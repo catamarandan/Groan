@@ -87,37 +87,37 @@ function generateMessage(data){
 let h = data.health;
 let drivers = [];
 
-// Identify drivers
 if(data.Neff > 0.4) drivers.push("nutrients");
 if(data.Seff > 0.4) drivers.push("sediment");
 if(data.Teff > 0.4) drivers.push("temperature");
 if(data.Aeff < 0.3) drivers.push("low aragonite");
 if(data.Leff < 0.3) drivers.push("low light");
 
-// Status
-let status, msg;
+let status, msg, color;
 
 if(h > 80){
-status = "🟢 STABLE";
+status = "STABLE";
+color = "#00e676"; // green
 msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
 }
 else if(h > 60){
-status = "🟡 WATCH";
+status = "WATCH";
+color = "#ffeb3b"; // yellow
 msg = "Early signs of stress are emerging.";
 }
 else if(h > 40){
-status = "🟠 WARNING";
+status = "WARNING";
+color = "#ff9800"; // orange
 msg = "Reef health is declining. Intervention recommended.";
 }
 else{
-status = "🔴 CRITICAL";
+status = "CRITICAL";
+color = "#ff1744"; // red
 msg = "Rapid degradation detected. Immediate action required.";
 }
 
-// Driver explanation
 let driverText = drivers.length ? " Primary drivers: " + drivers.join(", ") + "." : "";
 
-// Recommendation
 let rec = "";
 
 if(drivers.includes("nutrients")) rec += " Reduce nutrient runoff.";
@@ -127,7 +127,9 @@ if(drivers.includes("low aragonite")) rec += " Address acidification risks.";
 if(drivers.includes("low light")) rec += " Reduce turbidity.";
 
 return `
-<div class="status">${status}</div>
+<div style="font-size:20px;font-weight:bold;color:${color};">
+${status}
+</div>
 <br>${msg}${driverText}
 <br><br><b>Recommendation:</b> ${rec || "Maintain current conditions."}
 `;
