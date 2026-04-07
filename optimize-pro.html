@@ -173,49 +173,67 @@ function simulate(T, A, N, S, L, months) {
 }
 
 function generateMessage(data) {
-  let h = data.health;
-  let drivers = [];
 
-  if (data.Neff > 0.4) drivers.push("nutrients");
-  if (data.Seff > 0.4) drivers.push("sediment");
-  if (data.Teff > 0.4) drivers.push("temperature");
-  if (data.Aeff < 0.3) drivers.push("low aragonite");
-  if (data.Leff < 0.3) drivers.push("low light");
+let h = data.health;
+let drivers = [];
 
-  let statusText = "";
-  let statusClass = "";
-  let msg = "";
+if(data.Neff > 0.4) drivers.push("nutrients");
+if(data.Seff > 0.4) drivers.push("sediment");
+if(data.Teff > 0.4) drivers.push("temperature");
+if(data.Aeff < 0.3) drivers.push("low aragonite");
+if(data.Leff < 0.3) drivers.push("low light");
 
-  if (h > 80) {
-    statusText = "🟢 STABLE";
-    statusClass = "status-stable";
-    msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
-  } else if (h > 60) {
-    statusText = "🟡 WATCH";
-    statusClass = "status-watch";
-    msg = "Early signs of stress are emerging.";
-  } else if (h > 40) {
-    statusText = "🟠 WARNING";
-    statusClass = "status-warning";
-    msg = "Reef health is declining. Intervention recommended.";
-  } else {
-    statusText = "🔴 CRITICAL";
-    statusClass = "status-critical";
-    msg = "Rapid degradation detected. Immediate action required.";
-  }
+let bg = "", text = "", msg = "";
 
-  let driverText = drivers.length
-    ? "Primary drivers: " + drivers.join(", ") + "."
-    : "Primary drivers: none identified.";
+if(h > 80){
+bg = "#003d1f";
+text = "#00ff88";
+msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
+}
+else if(h > 60){
+bg = "#4d4d00";
+text = "#ffff00";
+msg = "Early signs of stress are emerging.";
+}
+else if(h > 40){
+bg = "#663300";
+text = "#ff9900";
+msg = "Reef health is declining. Intervention recommended.";
+}
+else{
+bg = "#660000";
+text = "#ff3333";
+msg = "Rapid degradation detected. Immediate action required.";
+}
 
-  let recParts = [];
-  if (drivers.includes("nutrients")) recParts.push("Reduce nutrient runoff.");
-  if (drivers.includes("sediment")) recParts.push("Improve water clarity.");
-  if (drivers.includes("temperature")) recParts.push("Monitor thermal stress.");
-  if (drivers.includes("low aragonite")) recParts.push("Address acidification risks.");
-  if (drivers.includes("low light")) recParts.push("Reduce turbidity.");
+let driverText = drivers.length ? "Primary drivers: " + drivers.join(", ") + "." : "";
 
-  let rec = recParts.length ? recParts.join(" ") : "Maintain current conditions.";
+let rec = "";
+
+if(drivers.includes("nutrients")) rec += " Reduce nutrient runoff.";
+if(drivers.includes("sediment")) rec += " Improve water clarity.";
+if(drivers.includes("temperature")) rec += " Monitor thermal stress.";
+if(drivers.includes("low aragonite")) rec += " Address acidification risks.";
+if(drivers.includes("low light")) rec += " Reduce turbidity.";
+
+return `
+<div style="
+  background:${bg};
+  color:${text};
+  padding:16px;
+  border-radius:8px;
+  font-size:22px;
+  font-weight:bold;
+  margin-bottom:10px;
+">
+STATUS
+</div>
+
+<div>${msg} ${driverText}</div>
+
+<br><b>Recommendation:</b> ${rec || "Maintain current conditions."}
+`;
+}
 
   return `
     <div class="status-box ${statusClass}">${statusText}</div>
