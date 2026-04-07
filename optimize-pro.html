@@ -10,6 +10,7 @@ body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
 .card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
 input { width:100%; padding:6px; margin:4px 0; }
 button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
+.status { font-size:18px; font-weight:bold; margin-top:10px; }
 </style>
 
 </head>
@@ -39,14 +40,12 @@ Time (months) <input id="time" value="12">
 
 function simulate(T,A,N,S,L,months){
 
-// --- NORMALIZATION (simple scaling) ---
 let Tn = (T - 27)/3;
 let An = (A - 3)/2;
 let Nn = N/10;
 let Sn = S/10;
 let Ln = L/10;
 
-// --- LAMBDA COUPLING ---
 let lambda = 0.2;
 
 let Teff = Tn + lambda*(Nn + Sn - Ln);
@@ -55,7 +54,6 @@ let Neff = Nn + lambda*(Tn + Sn);
 let Seff = Sn + lambda*(Nn);
 let Leff = Ln + lambda*(-Sn);
 
-// Clamp stability
 function clamp(x){ return Math.max(-1.5, Math.min(1.5, x)); }
 
 Teff = clamp(Teff);
@@ -64,7 +62,6 @@ Neff = clamp(Neff);
 Seff = clamp(Seff);
 Leff = clamp(Leff);
 
-// --- STRESS (COUPLED) ---
 let stress =
 Math.max(0,Teff)*0.6 +
 (1 - Aeff)*0.8 +
@@ -72,10 +69,8 @@ Neff*0.5 +
 Seff*0.6 -
 Leff*0.3;
 
-// --- CALCIFICATION (COUPLED) ---
 let calc = Math.max(0,(Aeff*2 + Leff) - stress);
 
-// --- HEALTH EVOLUTION ---
 let health=100;
 
 for(let i=0;i<months;i++){
@@ -84,7 +79,58 @@ if(health>100) health=100;
 if(health<0) health=0;
 }
 
-return Math.round(health);
+return {health, stress, Teff, Aeff, Neff, Seff, Leff};
+}
+
+function generateMessage(data){
+
+let h = data.health;
+let drivers = [];
+
+// Identify drivers
+if(data.Neff > 0.4) drivers.push("nutrients");
+if(data.Seff > 0.4) drivers.push("sediment");
+if(data.Teff > 0.4) drivers.push("temperature");
+if(data.Aeff < 0.3) drivers.push("low aragonite");
+if(data.Leff < 0.3) drivers.push("low light");
+
+// Status
+let status, msg;
+
+if(h > 80){
+status = "🟢 STABLE";
+msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
+}
+else if(h > 60){
+status = "🟡 WATCH";
+msg = "Early signs of stress are emerging.";
+}
+else if(h > 40){
+status = "🟠 WARNING";
+msg = "Reef health is declining. Intervention recommended.";
+}
+else{
+status = "🔴 CRITICAL";
+msg = "Rapid degradation detected. Immediate action required.";
+}
+
+// Driver explanation
+let driverText = drivers.length ? " Primary drivers: " + drivers.join(", ") + "." : "";
+
+// Recommendation
+let rec = "";
+
+if(drivers.includes("nutrients")) rec += " Reduce nutrient runoff.";
+if(drivers.includes("sediment")) rec += " Improve water clarity.";
+if(drivers.includes("temperature")) rec += " Monitor thermal stress.";
+if(drivers.includes("low aragonite")) rec += " Address acidification risks.";
+if(drivers.includes("low light")) rec += " Reduce turbidity.";
+
+return `
+<div class="status">${status}</div>
+<br>${msg}${driverText}
+<br><br><b>Recommendation:</b> ${rec || "Maintain current conditions."}
+`;
 }
 
 function run(){
@@ -96,7 +142,8 @@ let S0 = parseFloat(S.value);
 let L0 = parseFloat(L.value);
 let months = parseInt(time.value);
 
-let base = simulate(T0,A0,N0,S0,L0,months);
+let baseData = simulate(T0,A0,N0,S0,L0,months);
+let base = Math.round(baseData.health);
 
 let actions = [
 {n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
@@ -119,15 +166,19 @@ names.push(actions[j].n);
 }
 }
 
-let score=simulate(state.T,state.A,state.N,state.S,L0,months);
+let sim = simulate(state.T,state.A,state.N,state.S,L0,months);
 
-results.push({combo:names.join(" + "),value:score});
+results.push({combo:names.join(" + "),value:Math.round(sim.health)});
 }
 
 results.sort((a,b)=>b.value-a.value);
 
+let messageBlock = generateMessage(baseData);
+
 output.innerHTML=`
-<b>Baseline:</b> ${base}<br><br>
+<b>Baseline Score:</b> ${base}<br><br>
+${messageBlock}
+<br><br>
 <b>Best Strategy:</b><br>
 ${results[0].combo} → ${results[0].value}<br><br>
 <b>Top 5 Strategies:</b><br>
