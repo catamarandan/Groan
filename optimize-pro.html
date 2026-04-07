@@ -3,191 +3,284 @@
 <head>
 <meta charset="UTF-8">
 <title>GROAN™ Optimization Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
-.container { max-width:900px; margin:auto; }
-.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
-input { width:100%; padding:6px; margin:4px 0; }
-button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
-</style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0b1e2d;
+  color: white;
+  padding: 20px;
+  margin: 0;
+}
 
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: #132f45;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 4px 0 10px 0;
+  box-sizing: border-box;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #00bcd4;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 6px;
+}
+
+button:hover {
+  opacity: 0.95;
+}
+
+.version {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.status-box {
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 22px;
+  margin: 10px 0 14px 0;
+  border: 2px solid transparent;
+}
+
+.status-stable {
+  background: #0f3d22;
+  color: #7CFFB2;
+  border-color: #39d98a;
+}
+
+.status-watch {
+  background: #4a4300;
+  color: #FFF176;
+  border-color: #FFD54F;
+}
+
+.status-warning {
+  background: #4a2600;
+  color: #FFB74D;
+  border-color: #FF9800;
+}
+
+.status-critical {
+  background: #4a0012;
+  color: #FF8A80;
+  border-color: #FF1744;
+}
+
+.subtext {
+  line-height: 1.5;
+}
+</style>
 </head>
 <body>
 
 <div class="container">
 
-<h1>GROAN™ Optimization Pro</h1>
+  <h1>GROAN™ Optimization Pro</h1>
+  <div class="version">VERSION: OPT-PRO-COLOR-3</div>
 
-<div class="card">
-Temperature <input id="T" value="29">
-Ωarag <input id="A" value="3.2">
-Nutrients <input id="N" value="6">
-Sediment <input id="S" value="5">
-Light <input id="L" value="7">
-</div>
+  <div class="card">
+    Temperature
+    <input id="T" value="29">
 
-<div class="card">
-Time (months) <input id="time" value="12">
-<button onclick="run()">Find Best Strategy</button>
-<div id="output"></div>
-</div>
+    Ωarag
+    <input id="A" value="3.2">
+
+    Nutrients
+    <input id="N" value="6">
+
+    Sediment
+    <input id="S" value="5">
+
+    Light
+    <input id="L" value="7">
+  </div>
+
+  <div class="card">
+    Time (months)
+    <input id="time" value="12">
+
+    <button onclick="run()">Find Best Strategy</button>
+    <div id="output"></div>
+  </div>
 
 </div>
 
 <script>
-
-function simulate(T,A,N,S,L,months){
-
-let Tn = (T - 27)/3;
-let An = (A - 3)/2;
-let Nn = N/10;
-let Sn = S/10;
-let Ln = L/10;
-
-let lambda = 0.2;
-
-let Teff = Tn + lambda*(Nn + Sn - Ln);
-let Aeff = An + lambda*(-Tn + Ln);
-let Neff = Nn + lambda*(Tn + Sn);
-let Seff = Sn + lambda*(Nn);
-let Leff = Ln + lambda*(-Sn);
-
-function clamp(x){ return Math.max(-1.5, Math.min(1.5, x)); }
-
-Teff = clamp(Teff);
-Aeff = clamp(Aeff);
-Neff = clamp(Neff);
-Seff = clamp(Seff);
-Leff = clamp(Leff);
-
-let stress =
-Math.max(0,Teff)*0.6 +
-(1 - Aeff)*0.8 +
-Neff*0.5 +
-Seff*0.6 -
-Leff*0.3;
-
-let calc = Math.max(0,(Aeff*2 + Leff) - stress);
-
-let health=100;
-
-for(let i=0;i<months;i++){
-health += (calc*0.9) - (stress*1.4);
-if(health>100) health=100;
-if(health<0) health=0;
+function clamp(x, min, max) {
+  return Math.max(min, Math.min(max, x));
 }
 
-return {health, stress, Teff, Aeff, Neff, Seff, Leff};
+function simulate(T, A, N, S, L, months) {
+  let Tn = (T - 27) / 3;
+  let An = (A - 3) / 2;
+  let Nn = N / 10;
+  let Sn = S / 10;
+  let Ln = L / 10;
+
+  let lambda = 0.2;
+
+  let Teff = Tn + lambda * (Nn + Sn - Ln);
+  let Aeff = An + lambda * (-Tn + Ln);
+  let Neff = Nn + lambda * (Tn + Sn);
+  let Seff = Sn + lambda * (Nn);
+  let Leff = Ln + lambda * (-Sn);
+
+  Teff = clamp(Teff, -1.5, 1.5);
+  Aeff = clamp(Aeff, -1.5, 1.5);
+  Neff = clamp(Neff, -1.5, 1.5);
+  Seff = clamp(Seff, -1.5, 1.5);
+  Leff = clamp(Leff, -1.5, 1.5);
+
+  let stress =
+    Math.max(0, Teff) * 0.6 +
+    (1 - Aeff) * 0.8 +
+    Neff * 0.5 +
+    Seff * 0.6 -
+    Leff * 0.3;
+
+  let calc = Math.max(0, (Aeff * 2 + Leff) - stress);
+
+  let health = 100;
+
+  for (let i = 0; i < months; i++) {
+    health += (calc * 0.9) - (stress * 1.4);
+    if (health > 100) health = 100;
+    if (health < 0) health = 0;
+  }
+
+  return { health, stress, Teff, Aeff, Neff, Seff, Leff };
 }
 
-function generateMessage(data){
+function generateMessage(data) {
+  let h = data.health;
+  let drivers = [];
 
-let h = data.health;
-let drivers = [];
+  if (data.Neff > 0.4) drivers.push("nutrients");
+  if (data.Seff > 0.4) drivers.push("sediment");
+  if (data.Teff > 0.4) drivers.push("temperature");
+  if (data.Aeff < 0.3) drivers.push("low aragonite");
+  if (data.Leff < 0.3) drivers.push("low light");
 
-if(data.Neff > 0.4) drivers.push("nutrients");
-if(data.Seff > 0.4) drivers.push("sediment");
-if(data.Teff > 0.4) drivers.push("temperature");
-if(data.Aeff < 0.3) drivers.push("low aragonite");
-if(data.Leff < 0.3) drivers.push("low light");
+  let statusText = "";
+  let statusClass = "";
+  let msg = "";
 
-let status, msg, color;
+  if (h > 80) {
+    statusText = "🟢 STABLE";
+    statusClass = "status-stable";
+    msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
+  } else if (h > 60) {
+    statusText = "🟡 WATCH";
+    statusClass = "status-watch";
+    msg = "Early signs of stress are emerging.";
+  } else if (h > 40) {
+    statusText = "🟠 WARNING";
+    statusClass = "status-warning";
+    msg = "Reef health is declining. Intervention recommended.";
+  } else {
+    statusText = "🔴 CRITICAL";
+    statusClass = "status-critical";
+    msg = "Rapid degradation detected. Immediate action required.";
+  }
 
-if(h > 80){
-status = "🟢 STABLE";
-color = "#00e676";
-msg = "Reef conditions are stable. Growth is keeping pace with environmental stress.";
-}
-else if(h > 60){
-status = "🟡 WATCH";
-color = "#ffeb3b";
-msg = "Early signs of stress are emerging.";
-}
-else if(h > 40){
-status = "🟠 WARNING";
-color = "#ff9800";
-msg = "Reef health is declining. Intervention recommended.";
-}
-else{
-status = "🔴 CRITICAL";
-color = "#ff1744";
-msg = "Rapid degradation detected. Immediate action required.";
-}
+  let driverText = drivers.length
+    ? "Primary drivers: " + drivers.join(", ") + "."
+    : "Primary drivers: none identified.";
 
-let driverText = drivers.length ? " Primary drivers: " + drivers.join(", ") + "." : "";
+  let recParts = [];
+  if (drivers.includes("nutrients")) recParts.push("Reduce nutrient runoff.");
+  if (drivers.includes("sediment")) recParts.push("Improve water clarity.");
+  if (drivers.includes("temperature")) recParts.push("Monitor thermal stress.");
+  if (drivers.includes("low aragonite")) recParts.push("Address acidification risks.");
+  if (drivers.includes("low light")) recParts.push("Reduce turbidity.");
 
-let rec = "";
+  let rec = recParts.length ? recParts.join(" ") : "Maintain current conditions.";
 
-if(drivers.includes("nutrients")) rec += " Reduce nutrient runoff.";
-if(drivers.includes("sediment")) rec += " Improve water clarity.";
-if(drivers.includes("temperature")) rec += " Monitor thermal stress.";
-if(drivers.includes("low aragonite")) rec += " Address acidification risks.";
-if(drivers.includes("low light")) rec += " Reduce turbidity.";
-
-return `
-<div style="font-size:22px;font-weight:bold;color:${color};">
-${status}
-</div>
-<br>${msg}${driverText}
-<br><br><b>Recommendation:</b> ${rec || "Maintain current conditions."}
-`;
-}
-
-function run(){
-
-let T0 = parseFloat(T.value);
-let A0 = parseFloat(A.value);
-let N0 = parseFloat(N.value);
-let S0 = parseFloat(S.value);
-let L0 = parseFloat(L.value);
-let months = parseInt(time.value);
-
-let baseData = simulate(T0,A0,N0,S0,L0,months);
-let base = Math.round(baseData.health);
-
-let actions = [
-{n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
-{n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
-{n:"Reduce Temp", f:(x)=>({...x,T:x.T-1})},
-{n:"Increase Ωarag", f:(x)=>({...x,A:x.A+0.5})}
-];
-
-let results = [];
-
-for(let i=1;i<(1<<actions.length);i++){
-
-let state={T:T0,A:A0,N:N0,S:S0};
-let names=[];
-
-for(let j=0;j<actions.length;j++){
-if(i&(1<<j)){
-state=actions[j].f(state);
-names.push(actions[j].n);
-}
+  return `
+    <div class="status-box ${statusClass}">${statusText}</div>
+    <div class="subtext">${msg}</div>
+    <br>
+    <div class="subtext"><b>${driverText}</b></div>
+    <br>
+    <div class="subtext"><b>Recommendation:</b> ${rec}</div>
+  `;
 }
 
-let sim = simulate(state.T,state.A,state.N,state.S,L0,months);
+function run() {
+  let T0 = parseFloat(document.getElementById("T").value);
+  let A0 = parseFloat(document.getElementById("A").value);
+  let N0 = parseFloat(document.getElementById("N").value);
+  let S0 = parseFloat(document.getElementById("S").value);
+  let L0 = parseFloat(document.getElementById("L").value);
+  let months = parseInt(document.getElementById("time").value, 10);
 
-results.push({combo:names.join(" + "),value:Math.round(sim.health)});
+  let baseData = simulate(T0, A0, N0, S0, L0, months);
+  let base = Math.round(baseData.health);
+
+  let actions = [
+    { n: "Reduce Nutrients", f: (x) => ({ ...x, N: x.N - 2 }) },
+    { n: "Reduce Sediment", f: (x) => ({ ...x, S: x.S - 2 }) },
+    { n: "Reduce Temp", f: (x) => ({ ...x, T: x.T - 1 }) },
+    { n: "Increase Ωarag", f: (x) => ({ ...x, A: x.A + 0.5 }) }
+  ];
+
+  let results = [];
+
+  for (let i = 1; i < (1 << actions.length); i++) {
+    let state = { T: T0, A: A0, N: N0, S: S0 };
+    let names = [];
+
+    for (let j = 0; j < actions.length; j++) {
+      if (i & (1 << j)) {
+        state = actions[j].f(state);
+        names.push(actions[j].n);
+      }
+    }
+
+    let sim = simulate(state.T, state.A, state.N, state.S, L0, months);
+    results.push({
+      combo: names.join(" + "),
+      value: Math.round(sim.health)
+    });
+  }
+
+  results.sort((a, b) => b.value - a.value);
+
+  let messageBlock = generateMessage(baseData);
+
+  document.getElementById("output").innerHTML = `
+    <br>
+    <b>Baseline Score:</b> ${base}
+    <br><br>
+    ${messageBlock}
+    <br>
+    <b>Best Strategy:</b><br>
+    ${results[0].combo} → ${results[0].value}
+    <br><br>
+    <b>Top 5 Strategies:</b><br>
+    ${results.slice(0, 5).map(r => r.combo + ": " + r.value).join("<br>")}
+  `;
 }
-
-results.sort((a,b)=>b.value-a.value);
-
-let messageBlock = generateMessage(baseData);
-
-output.innerHTML=`
-<b>Baseline Score:</b> ${base}<br><br>
-${messageBlock}
-<br><br>
-<b>Best Strategy:</b><br>
-${results[0].combo} → ${results[0].value}<br><br>
-<b>Top 5 Strategies:</b><br>
-${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
-`;
-
-}
-
 </script>
 
 </body>
