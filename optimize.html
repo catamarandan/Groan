@@ -3,99 +3,132 @@
 <head>
 <meta charset="UTF-8">
 <title>GROAN™ Optimization Engine</title>
-
 <style>
-body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
-.container { max-width:900px; margin:auto; }
-.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
-input { width:100%; padding:6px; margin:4px 0; }
-button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1e2d;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+.card {
+    background: #132f45;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    background: #00bcd4;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+a {
+    color: #00bcd4;
+    text-decoration: none;
+    margin-right: 15px;
+}
+.nav {
+    margin-bottom: 20px;
+}
 </style>
-
 </head>
 <body>
 
 <div class="container">
 
+<div class="nav">
+    <a href="index.html">Base Engine</a>
+    <a href="compare.html">Compare</a>
+    <a href="decision.html">Decision</a>
+    <a href="optimize.html">Optimize</a>
+</div>
+
 <h1>GROAN™ Optimization Engine</h1>
 
 <div class="card">
-Temperature <input id="T" value="29">
-Ωarag <input id="A" value="3.2">
-Nutrients <input id="N" value="6">
-Sediment <input id="S" value="5">
-Light <input id="L" value="7">
+    <label>Temperature</label>
+    <input id="T" value="29">
+    <label>Ωarag</label>
+    <input id="A" value="3.2">
+    <label>Nutrients</label>
+    <input id="N" value="6">
+    <label>Sediment</label>
+    <input id="S" value="5">
+    <label>Light</label>
+    <input id="L" value="7">
 </div>
 
 <div class="card">
-Time (months) <input id="time" value="12">
-<button onclick="run()">Find Best Intervention</button>
-
-<div id="output"></div>
+    <label>Time (months)</label>
+    <input id="time" value="12">
+    <button onclick="run()">Find Best Intervention</button>
+    <div id="output" style="margin-top:15px;"></div>
 </div>
 
 </div>
 
 <script>
+function simulate(T, A, N, S, L, months) {
+    const stress =
+        Math.max(0, T - 27) * 0.4 +
+        (4 - A) * 0.6 +
+        N * 0.3 +
+        S * 0.4 -
+        L * 0.2;
 
-function simulate(T,A,N,S,L,months){
+    const calc = Math.max(0, (A * 2) - stress);
 
-let stress =
-Math.max(0,T-27)*0.4 +
-(4-A)*0.6 +
-N*0.3 +
-S*0.4 -
-L*0.2;
+    let health = 100;
 
-let calc = Math.max(0,(A*2)-stress);
+    for (let i = 0; i < months; i++) {
+        health += (calc * 0.8) - (stress * 1.5);
+        if (health > 100) health = 100;
+        if (health < 0) health = 0;
+    }
 
-let health=100;
-
-for(let i=0;i<months;i++){
-health += (calc*0.8) - (stress*1.5);
-if(health>100) health=100;
-if(health<0) health=0;
+    return Math.round(health);
 }
 
-return Math.round(health);
+function run() {
+    const T = parseFloat(document.getElementById("T").value);
+    const A = parseFloat(document.getElementById("A").value);
+    const N = parseFloat(document.getElementById("N").value);
+    const S = parseFloat(document.getElementById("S").value);
+    const L = parseFloat(document.getElementById("L").value);
+    const months = parseInt(document.getElementById("time").value, 10);
+
+    const base = simulate(T, A, N, S, L, months);
+
+    const options = [
+        { name: "Reduce Nutrients", value: simulate(T, A, N - 2, S, L, months) },
+        { name: "Reduce Sediment", value: simulate(T, A, N, S - 2, L, months) },
+        { name: "Reduce Temp", value: simulate(T - 1, A, N, S, L, months) },
+        { name: "Increase Ωarag", value: simulate(T, A + 0.5, N, S, L, months) }
+    ];
+
+    options.sort((a, b) => b.value - a.value);
+
+    document.getElementById("output").innerHTML = `
+        <b>Baseline:</b> ${base}<br><br>
+        <b>Best Intervention:</b><br>
+        ${options[0].name} → ${options[0].value}<br><br>
+        <b>All Options:</b><br>
+        ${options.map(r => `${r.name}: ${r.value}`).join("<br>")}
+    `;
 }
-
-function run(){
-
-let T = parseFloat(T.value);
-let A = parseFloat(A.value);
-let N = parseFloat(N.value);
-let S = parseFloat(S.value);
-let L = parseFloat(L.value);
-let months = parseInt(time.value);
-
-let base = simulate(T,A,N,S,L,months);
-
-let options = [
-{n:"Reduce Nutrients", fn:()=>simulate(T,A,N-2,S,L,months)},
-{n:"Reduce Sediment", fn:()=>simulate(T,A,N,S-2,L,months)},
-{n:"Reduce Temp", fn:()=>simulate(T-1,A,N,S,L,months)},
-{n:"Increase Ωarag", fn:()=>simulate(T,A+0.5,N,S,L,months)}
-];
-
-let results = options.map(o=>{
-return {name:o.n, value:o.fn()};
-});
-
-results.sort((a,b)=>b.value-a.value);
-
-output.innerHTML = `
-<b>Baseline:</b> ${base}<br><br>
-
-<b>Best Intervention:</b><br>
-${results[0].name} → ${results[0].value}<br><br>
-
-<b>All Options:</b><br>
-${results.map(r=>r.name + ": " + r.value).join("<br>")}
-`;
-
-}
-
 </script>
 
 </body>
