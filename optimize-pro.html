@@ -4,18 +4,21 @@
 <meta charset="UTF-8">
 <title>GROAN™ Optimization Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{font-family:Arial;background:#0b1e2d;color:white;padding:20px;margin:0}
-.container{max-width:900px;margin:auto}
-.card{background:#132f45;padding:15px;border-radius:8px;margin:10px 0}
-input{width:100%;padding:8px;margin:4px 0 10px 0;box-sizing:border-box}
-button{width:100%;padding:12px;background:#00bcd4;border:none;cursor:pointer;font-weight:bold;border-radius:6px}
-.status{padding:14px;border-radius:8px;font-size:22px;font-weight:bold;margin:10px 0}
+body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; margin:0; }
+.container { max-width:900px; margin:auto; }
+.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
+input { width:100%; padding:8px; margin:4px 0 10px 0; box-sizing:border-box; }
+button { width:100%; padding:12px; background:#00bcd4; border:none; cursor:pointer; font-weight:bold; border-radius:6px; }
+.status { padding:14px; border-radius:8px; font-size:22px; font-weight:bold; margin:10px 0; }
 </style>
+
 </head>
 <body>
 
 <div class="container">
+
 <h1>GROAN™ Optimization Pro</h1>
 
 <div class="card">
@@ -31,12 +34,16 @@ Time (months) <input id="time" value="12">
 <button id="runBtn">Find Best Strategy</button>
 <div id="output"></div>
 </div>
+
 </div>
 
 <script>
+
+// --- BASE ENGINE ---
 function simulate(T,A,N,S,L,months){
 let stress=Math.max(0,T-27)*0.4+(4-A)*0.6+N*0.3+S*0.4-L*0.2;
 let calc=Math.max(0,(A*2)-stress);
+
 let health=100;
 for(let i=0;i<months;i++){
 health+=(calc*0.8)-(stress*1.5);
@@ -46,6 +53,52 @@ if(health<0)health=0;
 return health;
 }
 
+// --- OPTIMIZATION ENGINE ---
+let actions = [
+{n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
+{n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
+{n:"Reduce Temp", f:(x)=>({...x,T:x.T-1})},
+{n:"Increase Ωarag", f:(x)=>({...x,A:x.A+0.5})}
+];
+
+function runOptimization(T,A,N,S,L,months){
+
+function sim(state){
+let stress=Math.max(0,state.T-27)*0.4+(4-state.A)*0.6+state.N*0.3+state.S*0.4-L*0.2;
+let calc=Math.max(0,(state.A*2)-stress);
+
+let h=100;
+for(let i=0;i<months;i++){
+h+=(calc*0.8)-(stress*1.5);
+if(h>100)h=100;
+if(h<0)h=0;
+}
+return Math.round(h);
+}
+
+let results=[];
+
+for(let i=1;i<(1<<actions.length);i++){
+
+let state={T:T,A:A,N:N,S:S};
+let names=[];
+
+for(let j=0;j<actions.length;j++){
+if(i&(1<<j)){
+state=actions[j].f(state);
+names.push(actions[j].n);
+}
+}
+
+let val=sim(state);
+results.push({combo:names.join(" + "),value:val});
+}
+
+results.sort((a,b)=>b.value-a.value);
+return results;
+}
+
+// --- MAIN RUN ---
 function run(){
 
 let T=parseFloat(document.getElementById("T").value);
@@ -55,43 +108,18 @@ let S=parseFloat(document.getElementById("S").value);
 let L=parseFloat(document.getElementById("L").value);
 let months=parseInt(document.getElementById("time").value);
 
-// --- SIMPLE ENGINE ---
-let stress=Math.max(0,T-27)*0.4+(4-A)*0.6+N*0.3+S*0.4-L*0.2;
-let calc=Math.max(0,(A*2)-stress);
-
-let health=100;
-
-for(let i=0;i<months;i++){
-health+=(calc*0.8)-(stress*1.5);
-if(health>100)health=100;
-if(health<0)health=0;
-}
-
-let score=Math.round(health);
+let score=Math.round(simulate(T,A,N,S,L,months));
 
 // --- STATUS ---
 let status="",bg="",msg="";
 
-if(score>80){
-status="STABLE"; bg="green";
-msg="Reef conditions are stable.";
-}
-else if(score>60){
-status="WATCH"; bg="yellow";
-msg="Early signs of stress emerging.";
-}
-else if(score>40){
-status="WARNING"; bg="orange";
-msg="Reef health declining.";
-}
-else{
-status="CRITICAL"; bg="red";
-msg="Rapid degradation detected.";
-}
+if(score>80){ status="STABLE"; bg="green"; msg="Reef conditions stable."; }
+else if(score>60){ status="WATCH"; bg="yellow"; msg="Stress emerging."; }
+else if(score>40){ status="WARNING"; bg="orange"; msg="Health declining."; }
+else{ status="CRITICAL"; bg="red"; msg="Rapid degradation."; }
 
-// --- DRIVER DETECTION ---
+// --- DRIVERS ---
 let drivers=[];
-
 if(N>5) drivers.push("nutrients");
 if(S>4) drivers.push("sediment");
 if(T>29) drivers.push("temperature");
@@ -102,13 +130,11 @@ let driverText = drivers.length ? drivers.join(", ") : "none";
 
 // --- RECOMMENDATIONS ---
 let rec="";
-
 if(drivers.includes("nutrients")) rec+="Reduce nutrient runoff. ";
 if(drivers.includes("sediment")) rec+="Improve water clarity. ";
 if(drivers.includes("temperature")) rec+="Monitor thermal stress. ";
 if(drivers.includes("low aragonite")) rec+="Address acidification. ";
 if(drivers.includes("low light")) rec+="Reduce turbidity. ";
-
 if(rec==="") rec="Maintain current conditions.";
 
 // --- OUTPUT ---
@@ -125,9 +151,23 @@ Baseline Score: ${score}
 
 <br><br><b>Recommendation:</b> ${rec}
 `;
+
+// --- OPTIMIZATION OUTPUT ---
+let results = runOptimization(T,A,N,S,L,months);
+
+document.getElementById("output").innerHTML += `
+<br><br><b>Best Strategy:</b><br>
+${results[0].combo} → ${results[0].value}
+
+<br><br><b>Top 5 Strategies:</b><br>
+${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
+`;
+
 }
 
+// --- BUTTON BIND ---
 document.getElementById("runBtn").addEventListener("click",run);
+
 </script>
 
 </body>
