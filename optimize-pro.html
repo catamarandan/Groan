@@ -47,6 +47,7 @@ return health;
 }
 
 function run(){
+
 let T=parseFloat(document.getElementById("T").value);
 let A=parseFloat(document.getElementById("A").value);
 let N=parseFloat(document.getElementById("N").value);
@@ -54,19 +55,75 @@ let S=parseFloat(document.getElementById("S").value);
 let L=parseFloat(document.getElementById("L").value);
 let months=parseInt(document.getElementById("time").value);
 
-let base=Math.round(simulate(T,A,N,S,L,months));
+// --- SIMPLE ENGINE ---
+let stress=Math.max(0,T-27)*0.4+(4-A)*0.6+N*0.3+S*0.4-L*0.2;
+let calc=Math.max(0,(A*2)-stress);
 
-let status="",bg="";
-if(base>80){status="STABLE";bg="green"}
-else if(base>60){status="WATCH";bg="yellow"}
-else if(base>40){status="WARNING";bg="orange"}
-else{status="CRITICAL";bg="red"}
+let health=100;
 
+for(let i=0;i<months;i++){
+health+=(calc*0.8)-(stress*1.5);
+if(health>100)health=100;
+if(health<0)health=0;
+}
+
+let score=Math.round(health);
+
+// --- STATUS ---
+let status="",bg="",msg="";
+
+if(score>80){
+status="STABLE"; bg="green";
+msg="Reef conditions are stable.";
+}
+else if(score>60){
+status="WATCH"; bg="yellow";
+msg="Early signs of stress emerging.";
+}
+else if(score>40){
+status="WARNING"; bg="orange";
+msg="Reef health declining.";
+}
+else{
+status="CRITICAL"; bg="red";
+msg="Rapid degradation detected.";
+}
+
+// --- DRIVER DETECTION ---
+let drivers=[];
+
+if(N>5) drivers.push("nutrients");
+if(S>4) drivers.push("sediment");
+if(T>29) drivers.push("temperature");
+if(A<3.2) drivers.push("low aragonite");
+if(L<6) drivers.push("low light");
+
+let driverText = drivers.length ? drivers.join(", ") : "none";
+
+// --- RECOMMENDATIONS ---
+let rec="";
+
+if(drivers.includes("nutrients")) rec+="Reduce nutrient runoff. ";
+if(drivers.includes("sediment")) rec+="Improve water clarity. ";
+if(drivers.includes("temperature")) rec+="Monitor thermal stress. ";
+if(drivers.includes("low aragonite")) rec+="Address acidification. ";
+if(drivers.includes("low light")) rec+="Reduce turbidity. ";
+
+if(rec==="") rec="Maintain current conditions.";
+
+// --- OUTPUT ---
 document.getElementById("output").innerHTML=`
 <div class="status" style="background:${bg};color:black">
 ${status}
 </div>
-Baseline Score: ${base}
+
+Baseline Score: ${score}
+
+<br><br>${msg}
+
+<br><br><b>Drivers:</b> ${driverText}
+
+<br><br><b>Recommendation:</b> ${rec}
 `;
 }
 
