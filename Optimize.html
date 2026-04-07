@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GROAN™ Optimization Engine</title>
+
+<style>
+body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; }
+.container { max-width:900px; margin:auto; }
+.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
+input { width:100%; padding:6px; margin:4px 0; }
+button { width:100%; padding:10px; background:#00bcd4; border:none; cursor:pointer; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>GROAN™ Optimization Engine</h1>
+
+<div class="card">
+Temperature <input id="T" value="29">
+Ωarag <input id="A" value="3.2">
+Nutrients <input id="N" value="6">
+Sediment <input id="S" value="5">
+Light <input id="L" value="7">
+</div>
+
+<div class="card">
+Time (months) <input id="time" value="12">
+<button onclick="run()">Find Best Intervention</button>
+
+<div id="output"></div>
+</div>
+
+</div>
+
+<script>
+
+function simulate(T,A,N,S,L,months){
+
+let stress =
+Math.max(0,T-27)*0.4 +
+(4-A)*0.6 +
+N*0.3 +
+S*0.4 -
+L*0.2;
+
+let calc = Math.max(0,(A*2)-stress);
+
+let health=100;
+
+for(let i=0;i<months;i++){
+health += (calc*0.8) - (stress*1.5);
+if(health>100) health=100;
+if(health<0) health=0;
+}
+
+return Math.round(health);
+}
+
+function run(){
+
+let T = parseFloat(T.value);
+let A = parseFloat(A.value);
+let N = parseFloat(N.value);
+let S = parseFloat(S.value);
+let L = parseFloat(L.value);
+let months = parseInt(time.value);
+
+let base = simulate(T,A,N,S,L,months);
+
+let options = [
+{n:"Reduce Nutrients", fn:()=>simulate(T,A,N-2,S,L,months)},
+{n:"Reduce Sediment", fn:()=>simulate(T,A,N,S-2,L,months)},
+{n:"Reduce Temp", fn:()=>simulate(T-1,A,N,S,L,months)},
+{n:"Increase Ωarag", fn:()=>simulate(T,A+0.5,N,S,L,months)}
+];
+
+let results = options.map(o=>{
+return {name:o.n, value:o.fn()};
+});
+
+results.sort((a,b)=>b.value-a.value);
+
+output.innerHTML = `
+<b>Baseline:</b> ${base}<br><br>
+
+<b>Best Intervention:</b><br>
+${results[0].name} → ${results[0].value}<br><br>
+
+<b>All Options:</b><br>
+${results.map(r=>r.name + ": " + r.value).join("<br>")}
+`;
+
+}
+
+</script>
+
+</body>
+</html>
