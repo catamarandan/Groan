@@ -39,19 +39,47 @@ Time (months) <input id="time" value="12">
 
 function simulate(T,A,N,S,L,months){
 
+// --- NORMALIZATION (simple scaling) ---
+let Tn = (T - 27)/3;
+let An = (A - 3)/2;
+let Nn = N/10;
+let Sn = S/10;
+let Ln = L/10;
+
+// --- LAMBDA COUPLING ---
+let lambda = 0.2;
+
+let Teff = Tn + lambda*(Nn + Sn - Ln);
+let Aeff = An + lambda*(-Tn + Ln);
+let Neff = Nn + lambda*(Tn + Sn);
+let Seff = Sn + lambda*(Nn);
+let Leff = Ln + lambda*(-Sn);
+
+// Clamp stability
+function clamp(x){ return Math.max(-1.5, Math.min(1.5, x)); }
+
+Teff = clamp(Teff);
+Aeff = clamp(Aeff);
+Neff = clamp(Neff);
+Seff = clamp(Seff);
+Leff = clamp(Leff);
+
+// --- STRESS (COUPLED) ---
 let stress =
-Math.max(0,T-27)*0.4 +
-(4-A)*0.6 +
-N*0.3 +
-S*0.4 -
-L*0.2;
+Math.max(0,Teff)*0.6 +
+(1 - Aeff)*0.8 +
+Neff*0.5 +
+Seff*0.6 -
+Leff*0.3;
 
-let calc = Math.max(0,(A*2)-stress);
+// --- CALCIFICATION (COUPLED) ---
+let calc = Math.max(0,(Aeff*2 + Leff) - stress);
 
+// --- HEALTH EVOLUTION ---
 let health=100;
 
 for(let i=0;i<months;i++){
-health += (calc*0.8) - (stress*1.5);
+health += (calc*0.9) - (stress*1.4);
 if(health>100) health=100;
 if(health<0) health=0;
 }
