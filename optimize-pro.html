@@ -1,569 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GROAN™ Optimization Pro</title>
-  <style>
-    :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --border: #d7deea;
-      --text: #16324f;
-      --muted: #5f7288;
-      --accent: #1f6fb2;
-      --accent-dark: #155588;
-      --good: #1d7a46;
-      --warn: #b7791f;
-      --bad: #b42318;
-      --shadow: 0 10px 30px rgba(20, 42, 74, 0.08);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, #eef4fa 0%, #f8fbfe 100%);
-      color: var(--text);
-      padding: 24px;
-    }
-
-    .wrap {
-      max-width: 1180px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #173b63 0%, #245c92 100%);
-      color: #fff;
-      border-radius: 18px;
-      padding: 24px 28px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px 0;
-      font-size: 2rem;
-      letter-spacing: 0.2px;
-    }
-
-    .hero p {
-      margin: 0;
-      color: rgba(255,255,255,0.88);
-      font-size: 1rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 20px;
-      align-items: start;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .panel h2 {
-      margin: 0 0 16px 0;
-      font-size: 1.3rem;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .field input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #c9d4e3;
-      border-radius: 10px;
-      font-size: 1rem;
-      background: #fff;
-    }
-
-    .field input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31, 111, 178, 0.12);
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 11px 16px;
-      font-size: 0.98rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-dark);
-    }
-
-    .btn-secondary {
-      background: #eaf1f8;
-      color: var(--text);
-      border: 1px solid #d5e1ee;
-    }
-
-    .statusbar {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .mini {
-      background: #f8fbff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .mini .k {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-
-    .mini .v {
-      font-size: 1.05rem;
-      font-weight: 700;
-    }
-
-    .output-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .box {
-      background: #fbfdff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-    }
-
-    .box h3 {
-      margin: 0 0 10px 0;
-      font-size: 1.05rem;
-    }
-
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: Consolas, Monaco, monospace;
-      font-size: 0.93rem;
-      color: #17324f;
-    }
-
-    .trajectory-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-      gap: 8px;
-    }
-
-    .month-chip {
-      background: #eef5fc;
-      border: 1px solid #d8e4f0;
-      border-radius: 10px;
-      padding: 8px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    .month-chip strong {
-      display: block;
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .good { color: var(--good); }
-    .warn { color: var(--warn); }
-    .bad  { color: var(--bad); }
-
-    .note {
-      margin-top: 14px;
-      font-size: 0.92rem;
-      color: var(--muted);
-    }
-
-    @media (max-width: 980px) {
-      .grid,
-      .output-grid,
-      .statusbar {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>GROAN™ Optimization Pro</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+input { margin: 5px; }
+button { margin: 10px 0; }
+#sourceTag { font-weight: bold; margin-top: 10px; }
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <section class="hero">
-      <h1>GROAN™ Optimization Pro</h1>
-      <p>Dynamic reef trajectory, trend, momentum, forward risk, decision support, and NOAA-assisted temperature input.</p>
-    </section>
 
-    <div class="grid">
-      <section class="panel">
-        <h2>Inputs</h2>
+<h2>GROAN™ Optimization Pro</h2>
 
-        <div class="form-grid">
-          <div class="field">
-            <label for="temp">Temperature (°C)</label>
-            <input id="temp" type="number" step="0.1" value="28" />
-          </div>
+<label>Temperature (°C)</label><br>
+<input id="temp" type="number" value="28"><br>
 
-          <div class="field">
-            <label for="omega">Ωarag</label>
-            <input id="omega" type="number" step="0.1" value="3.5" />
-          </div>
+<label>Ωarag</label><br>
+<input id="omega" type="number" value="3.5"><br>
 
-          <div class="field">
-            <label for="nutrients">Nutrients (0–10)</label>
-            <input id="nutrients" type="number" step="0.1" value="3" />
-          </div>
+<label>Nutrients</label><br>
+<input id="nutrients" type="number" value="3"><br>
 
-          <div class="field">
-            <label for="sediment">Sediment (0–10)</label>
-            <input id="sediment" type="number" step="0.1" value="2" />
-          </div>
+<label>Sediment</label><br>
+<input id="sediment" type="number" value="2"><br>
 
-          <div class="field">
-            <label for="light">Light (0–10)</label>
-            <input id="light" type="number" step="0.1" value="8" />
-          </div>
+<label>Light</label><br>
+<input id="light" type="number" value="8"><br>
 
-          <div class="field">
-            <label for="time">Time Horizon (months)</label>
-            <input id="time" type="number" step="1" value="12" />
-          </div>
-        </div>
+<label>Time (months)</label><br>
+<input id="time" type="number" value="12"><br>
 
-        <div class="btn-row">
-          <button class="btn-primary" onclick="runGROAN()">Run GROAN</button>
-          <button class="btn-secondary" onclick="loadNOAATemp()">Load NOAA Temperature</button>
-        </div>
+<button onclick="runGROAN()">Run GROAN</button>
 
-        <div class="note">
-          Fixed demo coordinates currently set for Bocas region:
-          <strong>9.35, -82.25</strong>
-        </div>
-      </section>
+<div id="sourceTag"></div>
+<pre id="output"></pre>
 
-      <section class="panel">
-        <h2>Output</h2>
+<script>
 
-        <div class="statusbar">
-          <div class="mini">
-            <div class="k">Data Source</div>
-            <div class="v" id="sourceTag">Manual Input</div>
-          </div>
-          <div class="mini">
-            <div class="k">Final Health</div>
-            <div class="v" id="healthTag">—</div>
-          </div>
-          <div class="mini">
-            <div class="k">Status</div>
-            <div class="v" id="statusTag">—</div>
-          </div>
-        </div>
+// ---------------- MULTI-VARIABLE INGEST ----------------
 
-        <div class="output-grid">
-          <div class="box">
-            <h3>System Summary</h3>
-            <pre id="summaryOutput">Run GROAN to generate output.</pre>
-          </div>
+const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
+const DATASET = "jplMURSST41";
 
-          <div class="box">
-            <h3>Trajectory</h3>
-            <div id="trajectoryOutput" class="trajectory-list"></div>
-          </div>
-        </div>
-
-        <div class="box" style="margin-top:16px;">
-          <h3>Raw JSON</h3>
-          <pre id="jsonOutput">Awaiting run.</pre>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <script>
-    const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
-    const DATASET = "jplMURSST41";
-
-    let lastDataSource = "Manual Input";
-
-    function round(val, dec = 2) {
-      return Number(Math.round(val + "e" + dec) + "e-" + dec);
-    }
-
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
-    }
-
-    function classifyHealthClass(status) {
-      if (status === "Stable") return "good";
-      if (status === "Watch" || status === "Warning") return "warn";
-      return "bad";
-    }
-
-    function convertTemperatureToStress(tempC) {
-      if (tempC < 26) return 2;
-      if (tempC < 28) return 4;
-      if (tempC < 30) return 6;
-      if (tempC < 31) return 8;
-      return 10;
-    }
-
-    function detectTrend(arr) {
-      if (arr.length < 2) return "Stable";
-      const first = arr[0];
-      const last = arr[arr.length - 1];
-      const delta = last - first;
-
-      if (delta > 1) return "Improving";
-      if (delta < -1) return "Degrading";
-      return "Stable";
-    }
-
-    function detectMomentum(arr) {
-      if (arr.length < 2) return "Weak";
-      const delta = arr[arr.length - 1] - arr[arr.length - 2];
-      const mag = Math.abs(delta);
-
-      if (mag < 0.5) return "Weak";
-      if (mag < 1.5) return "Moderate";
-      return "Strong";
-    }
-
-    function classifyStatus(health, trend) {
-      if (health >= 75 && trend === "Improving") return "Stable";
-      if (health >= 55) return "Watch";
-      if (health >= 35) return "Warning";
-      return "Critical";
-    }
-
-    function getForwardRisk(trajectory) {
-      for (let i = 0; i < trajectory.length; i++) {
-        if (trajectory[i] <= 50) {
-          return "Threshold in " + (i + 1) + " months";
-        }
-      }
-      return "No threshold breach in horizon";
-    }
-
-    function rankDrivers(Tstress, omega, nutrients, sediment, light) {
-      const omegaStress = clamp((4 - omega) * 3, 0, 10);
-      const lightStress = clamp(10 - light, 0, 10);
-
-      const drivers = [
-        { name: "Temperature", value: Tstress },
-        { name: "Nutrients", value: nutrients },
-        { name: "Sediment", value: sediment },
-        { name: "Low Aragonite", value: round(omegaStress, 2) },
-        { name: "Low Light", value: round(lightStress, 2) }
-      ];
-
-      drivers.sort((a, b) => b.value - a.value);
-      return drivers.slice(0, 3);
-    }
-
-    function getDecision(status, trend, momentum) {
-      if (status === "Critical") return "Immediate intervention required.";
-      if (status === "Warning" && trend === "Degrading") return "Urgent action recommended.";
-      if (status === "Watch" && trend === "Degrading") return "Preemptive action recommended.";
-      if (trend === "Improving") return "Monitor and maintain recovery conditions.";
-      return "Continue monitoring.";
-    }
-
-    function buildTrajectoryChips(trajectory) {
-      const container = document.getElementById("trajectoryOutput");
-      container.innerHTML = "";
-
-      trajectory.forEach((val, idx) => {
-        const chip = document.createElement("div");
-        chip.className = "month-chip";
-        chip.innerHTML = `<strong>Month ${idx + 1}</strong>${val}`;
-        container.appendChild(chip);
-      });
-    }
-
-    async function fetchNOAAData(lat, lon) {
-      try {
+async function fetchEnvironmentalData(lat, lon) {
+    try {
         const now = new Date();
         const dateStr = now.toISOString().split("T")[0];
+
+        // --- TEMPERATURE ---
         const query = `${NOAA_BASE_URL}${DATASET}.json?analysed_sst[(${dateStr}T00:00:00Z)][(${lat})][(${lon})]`;
-
         const response = await fetch(query);
-        if (!response.ok) throw new Error("NOAA fetch failed");
-
         const data = await response.json();
 
-        if (!data.table || !data.table.rows || !data.table.rows.length) {
-          throw new Error("NOAA returned no rows");
-        }
+        const tempK = data.table.rows[0][0];
+        const tempC = tempK - 273.15;
 
-        const sstKelvin = data.table.rows[0][0];
-        const tempC = sstKelvin - 273.15;
+        // --- PROXY VARIABLES (TEMPORARY STRUCTURE) ---
+        const nutrients = clamp((tempC - 26) * 1.5, 0, 10);
+        const sediment = clamp((tempC - 27) * 1.2, 0, 10);
+        const light = clamp(10 - (tempC - 26), 0, 10);
 
         return {
-          temperature_c: round(tempC, 2),
-          source: "NOAA LIVE DATA",
-          timestamp: now.toISOString()
+            temperature_c: round(tempC, 2),
+            nutrients: round(nutrients, 2),
+            sediment: round(sediment, 2),
+            light: round(light, 2),
+            source: "NOAA MULTI-VARIABLE (TEMP + PROXY)",
+            timestamp: now.toISOString()
         };
-      } catch (err) {
-        console.error("NOAA ERROR:", err);
+
+    } catch (err) {
+        console.error("ENV DATA ERROR:", err);
         return null;
-      }
     }
+}
 
-    async function loadNOAATemp() {
-      const lat = 9.35;
-      const lon = -82.25;
+// ---------------- ENGINE ----------------
 
-      const noaa = await fetchNOAAData(lat, lon);
+async function runGROAN() {
 
-      if (noaa) {
-        document.getElementById("temp").value = noaa.temperature_c;
-        lastDataSource = noaa.source;
-        document.getElementById("sourceTag").textContent = lastDataSource;
-      } else {
-        lastDataSource = "Manual Input (NOAA unavailable)";
-        document.getElementById("sourceTag").textContent = lastDataSource;
-        alert("NOAA data fetch failed. Manual temperature remains in use.");
-      }
-    }
+    const lat = 9.35;
+    const lon = -82.25;
 
-    async function runGROAN() {
-      const lat = 9.35;
-      const lon = -82.25;
+    const env = await fetchEnvironmentalData(lat, lon);
 
-      const noaa = await fetchNOAAData(lat, lon);
+    let tempInput, nutrients, sediment, light, sourceLabel;
 
-      let tempInput;
-      let sourceLabel;
+    if (env) {
+        tempInput = env.temperature_c;
+        nutrients = env.nutrients;
+        sediment = env.sediment;
+        light = env.light;
 
-      if (noaa) {
-        tempInput = noaa.temperature_c;
         document.getElementById("temp").value = tempInput;
-        sourceLabel = noaa.source;
-      } else {
+        document.getElementById("nutrients").value = nutrients;
+        document.getElementById("sediment").value = sediment;
+        document.getElementById("light").value = light;
+
+        sourceLabel = env.source;
+    } else {
         tempInput = parseFloat(document.getElementById("temp").value);
-        sourceLabel = "Manual Input (NOAA unavailable)";
-      }
+        nutrients = parseFloat(document.getElementById("nutrients").value);
+        sediment = parseFloat(document.getElementById("sediment").value);
+        light = parseFloat(document.getElementById("light").value);
 
-      lastDataSource = sourceLabel;
-      document.getElementById("sourceTag").textContent = sourceLabel;
+        sourceLabel = "MANUAL INPUT";
+    }
 
-      const omega = parseFloat(document.getElementById("omega").value);
-      const nutrients = parseFloat(document.getElementById("nutrients").value);
-      const sediment = parseFloat(document.getElementById("sediment").value);
-      const light = parseFloat(document.getElementById("light").value);
-      const time = parseInt(document.getElementById("time").value, 10);
+    document.getElementById("sourceTag").innerText = "Data Source: " + sourceLabel;
 
-      if ([tempInput, omega, nutrients, sediment, light, time].some(v => Number.isNaN(v))) {
-        alert("One or more inputs are invalid.");
-        return;
-      }
+    const T = convertTemperatureToStress(tempInput);
+    const O = parseFloat(document.getElementById("omega").value);
+    const time = parseInt(document.getElementById("time").value);
 
-      const Tstress = convertTemperatureToStress(tempInput);
+    let health = 100;
+    let trajectory = [];
 
-      let health = 100;
-      const trajectory = [];
+    for (let i = 0; i < time; i++) {
+        let stress = (T + nutrients + sediment) / 3;
+        let recovery = (O + light) / 2;
 
-      for (let i = 0; i < time; i++) {
-        const stress = ((Tstress * 1.35) + nutrients + sediment) / 3.35;
-        const recovery = ((omega * 1.05) + light) / 2.05;
-        const net = recovery - stress;
-
-        health += net;
+        health += (recovery - stress);
         health = clamp(health, 0, 100);
         trajectory.push(round(health, 2));
-      }
-
-      const trend = detectTrend(trajectory);
-      const momentum = detectMomentum(trajectory);
-      const status = classifyStatus(health, trend);
-      const risk = getForwardRisk(trajectory);
-      const topDrivers = rankDrivers(Tstress, omega, nutrients, sediment, light);
-      const decision = getDecision(status, trend, momentum);
-
-      const result = {
-        temperature_c: round(tempInput, 2),
-        temperature_stress: Tstress,
-        omega,
-        nutrients,
-        sediment,
-        light,
-        time_horizon_months: time,
-        final_health: round(health, 2),
-        status,
-        trend,
-        momentum,
-        forward_risk: risk,
-        top_drivers: topDrivers,
-        decision,
-        trajectory,
-        data_source: sourceLabel
-      };
-
-      document.getElementById("healthTag").textContent = result.final_health;
-      document.getElementById("statusTag").textContent = result.status;
-      document.getElementById("statusTag").className = "v " + classifyHealthClass(result.status);
-
-      document.getElementById("summaryOutput").textContent =
-`Health Score: ${result.final_health}
-Status: ${result.status}
-Trend: ${result.trend}
-Momentum: ${result.momentum}
-Forward Risk: ${result.forward_risk}
-Decision: ${result.decision}
-
-Top Drivers:
-1. ${result.top_drivers[0].name} (${result.top_drivers[0].value})
-2. ${result.top_drivers[1].name} (${result.top_drivers[1].value})
-3. ${result.top_drivers[2].name} (${result.top_drivers[2].value})`;
-
-      buildTrajectoryChips(result.trajectory);
-      document.getElementById("jsonOutput").textContent = JSON.stringify(result, null, 2);
     }
 
-    window.runGROAN = runGROAN;
-    window.loadNOAATemp = loadNOAATemp;
-  </script>
+    const trend = detectTrend(trajectory);
+    const momentum = detectMomentum(trajectory);
+    const status = classifyStatus(health, trend);
+
+    document.getElementById("output").innerText =
+        JSON.stringify({
+            final_health: health,
+            status,
+            trend,
+            momentum,
+            trajectory,
+            data_source: sourceLabel
+        }, null, 2);
+}
+
+// ---------------- HELPERS ----------------
+
+function convertTemperatureToStress(tempC) {
+    if (tempC < 26) return 2;
+    if (tempC < 28) return 4;
+    if (tempC < 30) return 6;
+    if (tempC < 31) return 8;
+    return 10;
+}
+
+function detectTrend(arr) {
+    if (arr[arr.length - 1] > arr[0]) return "Improving";
+    if (arr[arr.length - 1] < arr[0]) return "Degrading";
+    return "Stable";
+}
+
+function detectMomentum(arr) {
+    let delta = arr[arr.length - 1] - arr[arr.length - 2];
+    if (Math.abs(delta) < 0.5) return "Weak";
+    if (Math.abs(delta) < 1.5) return "Moderate";
+    return "Strong";
+}
+
+function classifyStatus(health, trend) {
+    if (health > 70 && trend === "Improving") return "Stable";
+    if (health > 50) return "Watch";
+    if (health > 30) return "Warning";
+    return "Critical";
+}
+
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+function round(val, dec) {
+    return Number(Math.round(val + "e" + dec) + "e-" + dec);
+}
+
+</script>
+
 </body>
 </html>
