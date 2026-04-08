@@ -53,7 +53,19 @@ if(health<0)health=0;
 return health;
 }
 
-// --- OPTIMIZATION ENGINE ---
+ function detectTrend(healthSeries) {
+    if (!healthSeries || healthSeries.length < 3) return "Stable";
+
+    let recent = healthSeries.slice(-3);
+
+    let slope = (recent[2] - recent[0]) / 2;
+
+    if (slope > 0.5) return "Improving";
+    if (slope < -0.5) return "Degrading";
+    return "Stable";
+} 
+
+  // --- OPTIMIZATION ENGINE ---
 let actions = [
 {n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
 {n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
