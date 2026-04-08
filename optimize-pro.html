@@ -39,7 +39,7 @@ Time (months) <input id="time" value="12">
 
 <script>
 
-// ================= ENGINE =================
+// ================= ENGINE (FINAL CALIBRATED) =================
 function monthlyDynamics(T,A,N,S,L){
 
     let t = (T - 27) / 3;
@@ -49,18 +49,17 @@ function monthlyDynamics(T,A,N,S,L){
     let l = (8 - L) / 8;
 
     let stress =
-        (t * 0.35) +
-        (a * 0.30) +
-        (n * 0.20) +
-        (s * 0.25) +
-        (l * 0.15);
+        (t * 0.50) +
+        (a * 0.35) +
+        (n * 0.30) +
+        (s * 0.35) +
+        (l * 0.20);
 
     let recovery =
-        (A / 4 * 0.6) +
-        (L / 10 * 0.3);
+        (A / 4 * 0.45) +
+        (L / 10 * 0.20);
 
-    // ✅ FIX — this was missing and breaking everything
-    let net = (recovery * 0.55) - (stress * 1.35);
+    let net = (recovery * 0.45) - (stress * 1.55);
 
     return { stress, recovery, net };
 }
@@ -84,26 +83,27 @@ function simulateSeries(T,A,N,S,L,months){
 
 // ================= TREND =================
 function detectTrend(series){
-    if(!series || series.length < 3) return "Stable";
+    if(series.length < 3) return "Stable";
+    let r = series.slice(-3);
+    let slope = (r[2] - r[0]) / 2;
 
-    const r = series.slice(-3);
-    const slope = (r[2] - r[0]) / 2;
-
-    if(slope > 0.5) return "Improving";
-    if(slope < -0.5) return "Degrading";
+    if(slope > 0.3) return "Improving";
+    if(slope < -0.3) return "Degrading";
     return "Stable";
 }
 
 function detectMomentum(series){
+    if(series.length < 6) return "Weak";
+
     let recent = series.slice(-6);
     let delta = recent[recent.length-1] - recent[0];
 
-    if(Math.abs(delta) < 3) return "Weak";
-    if(Math.abs(delta) < 10) return "Moderate";
+    if(Math.abs(delta) < 2) return "Weak";
+    if(Math.abs(delta) < 8) return "Moderate";
     return "Strong";
 }
 
-// ================= RISK =================
+// ================= STATUS =================
 function classifyStatus(score){
     if(score > 80) return "STABLE";
     if(score > 60) return "WATCH";
@@ -125,201 +125,111 @@ function statusMessage(status){
     return "Rapid degradation.";
 }
 
-function findThresholdCross(series, threshold){
+// ================= RISK =================
+function buildRisk(series){
     for(let i=0;i<series.length;i++){
-        if(series[i] <= threshold) return i + 1;
+        if(series[i] <= 40) return "Critical risk within " + (i+1) + " months";
+        if(series[i] <= 60) return "Warning risk within " + (i+1) + " months";
     }
-    return null;
+    return "No threshold breach projected";
 }
 
-function projectFutureRisk(T,A,N,S,L,currentScore,maxMonths){
-    let h = currentScore;
-
-    for(let m=1;m<=maxMonths;m++){
-        const d = monthlyDynamics(T,A,N,S,L);
-        h += d.net;
-
-        if(h > 100) h = 100;
-        if(h < 0) h = 0;
-
-        if(h <= 40) return "Critical risk within " + m + " months";
-        if(h <= 60) return "Warning risk within " + m + " months";
-    }
-
-    return "No threshold breach projected in next " + maxMonths + " months";
-}
-
-function buildRiskText(series, T,A,N,S,L){
-    const criticalNow = findThresholdCross(series, 40);
-    if(criticalNow !== null) return "Critical threshold reached in " + criticalNow + " months";
-
-    const warningNow = findThresholdCross(series, 60);
-    if(warningNow !== null) return "Warning threshold reached in " + warningNow + " months";
-
-    const current = series[series.length - 1];
-    return projectFutureRisk(T,A,N,S,L,current,12);
-}
-
-// ================= DRIVER RANKING =================
+// ================= DRIVERS =================
 function rankDrivers(T,A,N,S,L){
     const impacts = {
-        Temperature: Math.max(0, T - 27) * 0.4,
-        Aragonite: Math.max(0, 4 - A) * 0.6,
-        Nutrients: Math.max(0, N) * 0.3,
-        Sediment: Math.max(0, S) * 0.4,
-        Light: Math.max(0, 8 - L) * 0.15
+        Temperature: (T - 27) * 0.5,
+        Aragonite: (4 - A) * 0.6,
+        Nutrients: N * 0.4,
+        Sediment: S * 0.5,
+        Light: (8 - L) * 0.2
     };
 
     return Object.entries(impacts)
-        .sort((a,b) => b[1] - a[1])
+        .sort((a,b)=>b[1]-a[1])
         .slice(0,3)
-        .map(x => x[0]);
+        .map(x=>x[0]);
 }
 
-// ================= LEGACY DRIVER FLAGS =================
-function getDriverFlags(T,A,N,S,L){
-    let drivers = [];
-    if(N > 5) drivers.push("nutrients");
-    if(S > 4) drivers.push("sediment");
-    if(T > 29) drivers.push("temperature");
-    if(A < 3.2) drivers.push("low aragonite");
-    if(L < 6) drivers.push("low light");
-    return drivers;
-}
-
-function buildRecommendations(drivers){
-    let rec = "";
-    if(drivers.includes("nutrients")) rec += "Reduce nutrient runoff. ";
-    if(drivers.includes("sediment")) rec += "Improve water clarity. ";
-    if(drivers.includes("temperature")) rec += "Monitor thermal stress. ";
-    if(drivers.includes("low aragonite")) rec += "Address acidification. ";
-    if(drivers.includes("low light")) rec += "Reduce turbidity. ";
-    if(rec === "") rec = "Maintain current conditions.";
-    return rec;
-}
-
-// ================= OPTIMIZATION ENGINE =================
+// ================= OPTIMIZATION =================
 let actions = [
-    { n:"Reduce Nutrients", f:(x)=>({...x, N:Math.max(0, x.N - 2)}) },
-    { n:"Reduce Sediment",  f:(x)=>({...x, S:Math.max(0, x.S - 2)}) },
-    { n:"Reduce Temp",      f:(x)=>({...x, T:Math.max(24, x.T - 1)}) },
-    { n:"Increase Ωarag",   f:(x)=>({...x, A:Math.min(4.2, x.A + 0.5)}) }
+    { n:"Reduce Nutrients", f:(x)=>({...x,N:Math.max(0,x.N-2)}) },
+    { n:"Reduce Sediment", f:(x)=>({...x,S:Math.max(0,x.S-2)}) },
+    { n:"Reduce Temp", f:(x)=>({...x,T:Math.max(24,x.T-1)}) },
+    { n:"Increase Ωarag", f:(x)=>({...x,A:Math.min(4.2,x.A+0.5)}) }
 ];
 
-function evaluateStrategy(base, selectedActions, months){
-    let state = { ...base };
-    let names = [];
+function evaluateStrategy(base, selected, months){
+    let state={...base};
+    let names=[];
 
-    for(const action of selectedActions){
-        state = action.f(state);
-        names.push(action.n);
+    for(const a of selected){
+        state=a.f(state);
+        names.push(a.n);
     }
 
-    let series = simulateSeries(state.T, state.A, state.N, state.S, state.L, months);
-    let rawFinal = series[series.length - 1];
+    let series=simulateSeries(state.T,state.A,state.N,state.S,state.L,months);
+    let raw=series[series.length-1];
 
-    let bonus = 0;
-    if(names.includes("Reduce Nutrients") && names.includes("Reduce Sediment")) bonus += 3;
-    if(names.includes("Reduce Temp") && names.includes("Increase Ωarag")) bonus += 2;
+    let penalty = selected.length * 3;
+    let variability = (Math.random()*4)-2;
 
-    let penalty = 0;
-    if(selectedActions.length >= 3) penalty += (selectedActions.length - 2) * 4;
-    if(selectedActions.length === 4) penalty += 4;
+    let val = Math.round(raw - penalty + variability);
 
-    let ceiling = 95;
-    if(state.T <= 27 && state.A >= 4 && state.N <= 2 && state.S <= 2 && state.L >= 8){
-        ceiling = 100;
-    }
+    if(val>95) val=95;
+    if(val<0) val=0;
 
-    let adjusted = Math.round(rawFinal + bonus - penalty);
-    if(adjusted > ceiling) adjusted = ceiling;
-    if(adjusted < 0) adjusted = 0;
-
-    return {
-        combo: names.join(" + "),
-        value: adjusted,
-        raw: Math.round(rawFinal),
-        actionCount: selectedActions.length
-    };
+    return {combo:names.join(" + "),value:val};
 }
 
 function runOptimization(T,A,N,S,L,months){
-    const base = { T, A, N, S, L };
-    let results = [];
+    let base={T,A,N,S,L};
+    let results=[];
 
     for(let i=1;i<(1<<actions.length);i++){
-        let selected = [];
+        let sel=[];
         for(let j=0;j<actions.length;j++){
-            if(i & (1<<j)) selected.push(actions[j]);
+            if(i&(1<<j)) sel.push(actions[j]);
         }
-        results.push(evaluateStrategy(base, selected, months));
+        results.push(evaluateStrategy(base,sel,months));
     }
 
-    results.sort((a,b)=>{
-        if(b.value !== a.value) return b.value - a.value;
-        return a.actionCount - b.actionCount;
-    });
-
+    results.sort((a,b)=>b.value-a.value);
     return results;
 }
 
-// ================= DECISION LAYER =================
-function buildDecision(status, trend, momentum, riskText, score){
-    if(status === "CRITICAL"){
-        return "IMMEDIATE ACTION — system already in critical condition.";
-    }
-
-    if(status === "WARNING" && trend === "Degrading"){
-        return "URGENT PRIORITY — intervene now before critical threshold is reached.";
-    }
-
-    if(status === "WATCH" && trend === "Degrading" && momentum !== "Weak"){
-        return "PREEMPTIVE ACTION — conditions are worsening and should be addressed now.";
-    }
-
-    if(riskText.includes("within")){
-        return "FORWARD RISK DETECTED — intervention window is open but narrowing.";
-    }
-
-    if(status === "STABLE" && trend === "Improving"){
-        return "MAINTAIN COURSE — system is stable and improving.";
-    }
-
-    return "MONITOR CLOSELY — maintain surveillance and reassess conditions.";
+// ================= DECISION =================
+function buildDecision(status,trend,risk){
+    if(status==="CRITICAL") return "IMMEDIATE ACTION REQUIRED";
+    if(status==="WARNING" && trend==="Degrading") return "URGENT INTERVENTION REQUIRED";
+    if(status==="WATCH" && trend==="Degrading") return "PREEMPTIVE ACTION ADVISED";
+    if(risk.includes("within")) return "FORWARD RISK DETECTED";
+    return "MONITOR CONDITIONS";
 }
 
 // ================= MAIN =================
 function run(){
-    let T = parseFloat(document.getElementById("T").value);
-    let A = parseFloat(document.getElementById("A").value);
-    let N = parseFloat(document.getElementById("N").value);
-    let S = parseFloat(document.getElementById("S").value);
-    let L = parseFloat(document.getElementById("L").value);
-    let months = parseInt(document.getElementById("time").value);
 
-    let series = simulateSeries(T,A,N,S,L,months);
-    let score = Math.round(series[series.length - 1]);
+    let T=parseFloat(document.getElementById("T").value);
+    let A=parseFloat(document.getElementById("A").value);
+    let N=parseFloat(document.getElementById("N").value);
+    let S=parseFloat(document.getElementById("S").value);
+    let L=parseFloat(document.getElementById("L").value);
+    let months=parseInt(document.getElementById("time").value);
 
-    let status = classifyStatus(score);
-    let bg = statusColor(status);
-    let msg = statusMessage(status);
+    let series=simulateSeries(T,A,N,S,L,months);
+    let score=Math.round(series[series.length-1]);
 
-    let trend = detectTrend(series);
-    let momentum = detectMomentum(series);
-    let risk = buildRiskText(series, T,A,N,S,L);
+    let status=classifyStatus(score);
+    let trend=detectTrend(series);
+    let momentum=detectMomentum(series);
+    let risk=buildRisk(series);
 
-    let rankedDrivers = rankDrivers(T,A,N,S,L);
-    let drivers = getDriverFlags(T,A,N,S,L);
-    let driverText = drivers.length ? drivers.join(", ") : "none";
-    let rec = buildRecommendations(drivers);
+    let drivers=rankDrivers(T,A,N,S,L);
+    let results=runOptimization(T,A,N,S,L,months);
+    let decision=buildDecision(status,trend,risk);
 
-    let results = runOptimization(T,A,N,S,L,months);
-    let decision = buildDecision(status, trend, momentum, risk, score);
-
-    document.getElementById("output").innerHTML = `
-<div class="status" style="background:${bg};color:black">
-${status}
-</div>
+    document.getElementById("output").innerHTML=`
+<div class="status" style="background:${statusColor(status)};color:black">${status}</div>
 
 Baseline Score: ${score}
 
@@ -327,25 +237,21 @@ Baseline Score: ${score}
 <br><b>Momentum:</b> ${momentum}
 <br><b>Forward Risk:</b> ${risk}
 
-<br><br>${msg}
+<br><br>${statusMessage(status)}
 
-<br><br><b>Top Drivers (Ranked):</b> ${rankedDrivers.join(", ")}
+<br><br><b>Top Drivers:</b> ${drivers.join(", ")}
 
-<br><br><b>Drivers (Threshold Flags):</b> ${driverText}
-
-<br><br><b>Recommendation:</b> ${rec}
-
-<br><br><b>Decision Priority:</b> ${decision}
+<br><br><b>Decision:</b> ${decision}
 
 <br><br><b>Best Strategy:</b><br>
 ${results[0].combo} → ${results[0].value}
 
 <br><br><b>Top 5 Strategies:</b><br>
-${results.slice(0,5).map(r => r.combo + ": " + r.value).join("<br>")}
+${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
 `;
 }
 
-document.getElementById("runBtn").addEventListener("click", run);
+document.getElementById("runBtn").addEventListener("click",run);
 
 </script>
 
