@@ -3,243 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <title>GROAN™ Optimization Pro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-body { font-family: Arial; background:#0b1e2d; color:white; padding:20px; margin:0; }
-.container { max-width:900px; margin:auto; }
-.card { background:#132f45; padding:15px; border-radius:8px; margin:10px 0; }
-input { width:100%; padding:8px; margin:4px 0 10px 0; box-sizing:border-box; }
-button { width:100%; padding:12px; background:#00bcd4; border:none; cursor:pointer; font-weight:bold; border-radius:6px; }
-.status { padding:14px; border-radius:8px; font-size:22px; font-weight:bold; margin:10px 0; }
+body { font-family: Arial; padding: 20px; }
+input { margin: 5px; }
+button { margin: 10px 0; }
+#sourceTag { font-weight: bold; margin-top: 10px; }
 </style>
-
 </head>
+
 <body>
 
-<div class="container">
+<h2>GROAN™ Optimization Pro</h2>
 
-<h1>GROAN™ Optimization Pro</h1>
+<h3>Inputs</h3>
 
-<div class="card">
-Temperature <input id="T" value="29">
-Ωarag <input id="A" value="3.2">
-Nutrients <input id="N" value="6">
-Sediment <input id="S" value="5">
-Light <input id="L" value="7">
-</div>
+<label>Temperature (°C)</label><br>
+<input id="temp" type="number" value="28"><br>
 
-<div class="card">
-Time (months) <input id="time" value="12">
-<button id="runBtn">Find Best Strategy</button>
-<div id="output"></div>
-</div>
+<label>Ωarag</label><br>
+<input id="omega" type="number" value="3.5"><br>
 
-</div>
+<label>Nutrients</label><br>
+<input id="nutrients" type="number" value="3"><br>
 
-<script>
+<label>Sediment</label><br>
+<input id="sediment" type="number" value="2"><br>
 
-// ================= ENGINE =================
-function monthlyDynamics(T,A,N,S,L){
+<label>Light</label><br>
+<input id="light" type="number" value="8"><br>
 
-    let t = Math.max(0,(T-27))/3;
-    let a = Math.max(0,(4-A))/1.5;
-    let n = N/10;
-    let s = S/10;
-    let l = Math.max(0,(8-L))/8;
+<label>Time (months)</label><br>
+<input id="time" type="number" value="12"><br>
 
-    let stress =
-        (t * 0.55) +
-        (a * 0.45) +
-        (n * 0.40) +
-        (s * 0.45) +
-        (l * 0.25);
+<button onclick="runGROAN()">Run GROAN</button>
 
-    let recovery =
-        (A/4 * 0.35) +
-        (L/10 * 0.15);
+<div id="sourceTag"></div>
 
-    let net = recovery - (stress * 1.5);
+<h3>Output</h3>
+<pre id="output"></pre>
 
-    return {net};
+<script type="module">
+
+// ---------------- NOAA INGEST ----------------
+
+const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
+const DATASET = "jplMURSST41";
+
+async function fetchNOAAData(lat, lon) {
+    try {
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0];
+
+        const query = `${NOAA_BASE_URL}${DATASET}.json?analysed_sst[(${dateStr}T00:00:00Z)][(${lat})][(${lon})]`;
+
+        const response = await fetch(query);
+        if (!response.ok) throw new Error("NOAA fetch failed");
+
+        const data = await response.json();
+        const sstKelvin = data.table.rows[0][0];
+        const tempC = sstKelvin - 273.15;
+
+        return {
+            temperature_c: round(tempC, 2),
+            source: "NOAA",
+            timestamp: now.toISOString()
+        };
+
+    } catch (err) {
+        console.error("NOAA ERROR:", err);
+        return null;
+    }
 }
 
-function simulateSeries(T,A,N,S,L,months){
-    let health = 100;
-    let series = [];
+// ---------------- CORE ENGINE ----------------
 
-    for(let i=0;i<months;i++){
-        let d = monthlyDynamics(T,A,N,S,L);
-        health += d.net;
+async function runGROAN() {
 
-        if(health > 100) health = 100;
-        if(health < 0) health = 0;
+    const lat = 9.35;
+    const lon = -82.25;
 
-        series.push(health);
+    const rawNOAA = await fetchNOAAData(lat, lon);
+
+    let tempInput;
+    let sourceLabel;
+
+    if (rawNOAA) {
+        tempInput = rawNOAA.temperature_c;
+        document.getElementById("temp").value = tempInput;
+        sourceLabel = "NOAA LIVE DATA";
+    } else {
+        tempInput = parseFloat(document.getElementById("temp").value);
+        sourceLabel = "MANUAL INPUT";
     }
 
-    return series;
+    document.getElementById("sourceTag").innerText = "Data Source: " + sourceLabel;
+
+    const T = convertTemperatureToStress(tempInput);
+    const O = parseFloat(document.getElementById("omega").value);
+    const N = parseFloat(document.getElementById("nutrients").value);
+    const S = parseFloat(document.getElementById("sediment").value);
+    const L = parseFloat(document.getElementById("light").value);
+    const time = parseInt(document.getElementById("time").value);
+
+    let health = 100;
+    let trajectory = [];
+
+    for (let i = 0; i < time; i++) {
+        let stress = (T + N + S) / 3;
+        let recovery = (O + L) / 2;
+
+        health += (recovery - stress);
+        health = clamp(health, 0, 100);
+        trajectory.push(round(health, 2));
+    }
+
+    const trend = detectTrend(trajectory);
+    const momentum = detectMomentum(trajectory);
+    const status = classifyStatus(health, trend);
+
+    document.getElementById("output").innerText =
+        JSON.stringify({
+            final_health: health,
+            status,
+            trend,
+            momentum,
+            trajectory,
+            data_source: sourceLabel
+        }, null, 2);
 }
 
-// ================= TREND =================
-function detectTrend(series){
-    let r = series.slice(-3);
-    let slope = (r[2] - r[0]) / 2;
+// ---------------- HELPERS ----------------
 
-    if(slope < -0.2) return "Degrading";
-    if(slope > 0.2) return "Improving";
+function convertTemperatureToStress(tempC) {
+    if (tempC < 26) return 2;
+    if (tempC < 28) return 4;
+    if (tempC < 30) return 6;
+    if (tempC < 31) return 8;
+    return 10;
+}
+
+function detectTrend(arr) {
+    if (arr[arr.length - 1] > arr[0]) return "Improving";
+    if (arr[arr.length - 1] < arr[0]) return "Degrading";
     return "Stable";
 }
 
-function detectMomentum(series){
-    let r = series.slice(-6);
-    let delta = r[r.length-1] - r[0];
-
-    if(Math.abs(delta) < 2) return "Weak";
-    if(Math.abs(delta) < 8) return "Moderate";
+function detectMomentum(arr) {
+    let delta = arr[arr.length - 1] - arr[arr.length - 2];
+    if (Math.abs(delta) < 0.5) return "Weak";
+    if (Math.abs(delta) < 1.5) return "Moderate";
     return "Strong";
 }
 
-// ================= STATUS =================
-function classifyStatus(score, trend){
-
-    if(score > 80){
-        if(trend === "Degrading") return "WATCH";
-        return "STABLE";
-    }
-
-    if(score > 60) return "WATCH";
-    if(score > 40) return "WARNING";
-    return "CRITICAL";
+function classifyStatus(health, trend) {
+    if (health > 70 && trend === "Improving") return "Stable";
+    if (health > 50) return "Watch";
+    if (health > 30) return "Warning";
+    return "Critical";
 }
 
-// ================= RISK =================
-function buildRisk(series){
-    for(let i=0;i<series.length;i++){
-        if(series[i] <= 40) return "Critical risk within " + (i+1) + " months";
-        if(series[i] <= 60) return "Warning risk within " + (i+1) + " months";
-    }
-    return "No threshold breach projected";
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
 }
 
-// ================= DRIVERS =================
-function rankDrivers(T,A,N,S,L){
-    const impacts = {
-        Sediment: S*0.5,
-        Nutrients: N*0.4,
-        Temperature: Math.max(0,T-27)*0.5,
-        Aragonite: Math.max(0,4-A)*0.5,
-        Light: Math.max(0,8-L)*0.2
-    };
-
-    return Object.entries(impacts)
-        .sort((a,b)=>b[1]-a[1])
-        .slice(0,3)
-        .map(x=>x[0]);
+function round(val, dec) {
+    return Number(Math.round(val + "e" + dec) + "e-" + dec);
 }
-
-// ================= OPTIMIZATION =================
-let actions = [
-{n:"Reduce Nutrients", f:(x)=>({...x,N:Math.max(0,x.N-2)})},
-{n:"Reduce Sediment", f:(x)=>({...x,S:Math.max(0,x.S-2)})},
-{n:"Reduce Temp", f:(x)=>({...x,T:Math.max(24,x.T-1)})},
-{n:"Increase Ωarag", f:(x)=>({...x,A:Math.min(4.2,x.A+0.5)})}
-];
-
-function evaluateStrategy(base, selected, months){
-    let state={...base};
-    let names=[];
-
-    for(const a of selected){
-        state=a.f(state);
-        names.push(a.n);
-    }
-
-    let s=simulateSeries(state.T,state.A,state.N,state.S,state.L,months);
-    let raw=s[s.length-1];
-
-    let penalty = selected.length * 4;
-    let variability = (Math.random()*4)-2;
-
-    let val = Math.round(raw - penalty + variability);
-
-    if(val>95) val=95;
-    if(val<0) val=0;
-
-    return {combo:names.join(" + "),value:val};
-}
-
-function runOptimization(T,A,N,S,L,months){
-    let base={T,A,N,S,L};
-    let results=[];
-
-    for(let i=1;i<(1<<actions.length);i++){
-        let sel=[];
-        for(let j=0;j<actions.length;j++){
-            if(i&(1<<j)) sel.push(actions[j]);
-        }
-        results.push(evaluateStrategy(base,sel,months));
-    }
-
-    results.sort((a,b)=>b.value-a.value);
-    return results;
-}
-
-// ================= DECISION =================
-function buildDecision(status,trend,risk){
-    if(status==="CRITICAL") return "IMMEDIATE ACTION REQUIRED";
-    if(status==="WARNING" && trend==="Degrading") return "URGENT INTERVENTION REQUIRED";
-    if(status==="WATCH" && trend==="Degrading") return "PREEMPTIVE ACTION ADVISED";
-    if(risk.includes("within")) return "FORWARD RISK DETECTED";
-    return "MONITOR CONDITIONS";
-}
-
-// ================= MAIN =================
-function run(){
-
-let T=parseFloat(document.getElementById("T").value);
-let A=parseFloat(document.getElementById("A").value);
-let N=parseFloat(document.getElementById("N").value);
-let S=parseFloat(document.getElementById("S").value);
-let L=parseFloat(document.getElementById("L").value);
-let months=parseInt(document.getElementById("time").value);
-
-let series=simulateSeries(T,A,N,S,L,months);
-let score=Math.round(series[series.length-1]);
-
-let trend=detectTrend(series);
-let momentum=detectMomentum(series);
-let status=classifyStatus(score,trend);
-let risk=buildRisk(series);
-
-let drivers=rankDrivers(T,A,N,S,L);
-let results=runOptimization(T,A,N,S,L,months);
-let decision=buildDecision(status,trend,risk);
-
-document.getElementById("output").innerHTML=`
-<div class="status" style="background:${status==="STABLE"?"green":status==="WATCH"?"yellow":status==="WARNING"?"orange":"red"};color:black">
-${status}
-</div>
-
-Baseline Score: ${score}
-
-<br><br><b>Trend:</b> ${trend}
-<br><b>Momentum:</b> ${momentum}
-<br><b>Forward Risk:</b> ${risk}
-
-<br><br><b>Top Drivers:</b> ${drivers.join(", ")}
-
-<br><br><b>Decision:</b> ${decision}
-
-<br><br><b>Best Strategy:</b><br>
-${results[0].combo} → ${results[0].value}
-
-<br><br><b>Top 5 Strategies:</b><br>
-${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
-`;
-}
-
-document.getElementById("runBtn").addEventListener("click",run);
 
 </script>
 
