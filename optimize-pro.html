@@ -63,7 +63,7 @@ function monthlyDynamics(T,A,N,S,L){
         (L / 10 * 0.3);
 
     // --- NET EFFECT ---
-    let net = (recovery * 0.7) - (stress * 1.2);
+   (recovery * 0.55) - (stress * 1.35)
 
     return { stress, recovery, net };
 }
