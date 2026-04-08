@@ -39,155 +39,275 @@ Time (months) <input id="time" value="12">
 
 <script>
 
-// ================= ENGINE (FIXED: RETURNS SERIES) =================
-function simulateSeries(T,A,N,S,L,months){
+// ================= ENGINE =================
+function monthlyDynamics(T,A,N,S,L){
+    const thermal = Math.max(0, T - 27) * 0.4;
+    const aragDeficit = Math.max(0, 4 - A) * 0.6;
+    const nutrient = Math.max(0, N) * 0.3;
+    const sediment = Math.max(0, S) * 0.4;
+    const lightPenalty = Math.max(0, 8 - L) * 0.15;
 
-let stress=Math.max(0,T-27)*0.4+(4-A)*0.6+N*0.3+S*0.4-L*0.2;
-let calc=Math.max(0,(A*2)-stress);
+    const stress = thermal + aragDeficit + nutrient + sediment + lightPenalty;
+    const calc = Math.max(0, (A * 1.6) + (L * 0.12) - (thermal * 0.35));
+    const net = (calc * 0.65) - (stress * 1.1);
 
-let health=100;
-let series=[];
-
-for(let i=0;i<months;i++){
-health+=(calc*0.8)-(stress*1.5);
-if(health>100)health=100;
-if(health<0)health=0;
-series.push(health);
+    return { stress, calc, net };
 }
 
-return series;
+function simulateSeries(T,A,N,S,L,months){
+    let health = 100;
+    let series = [];
+
+    for(let i=0;i<months;i++){
+        const d = monthlyDynamics(T,A,N,S,L);
+        health += d.net;
+
+        if(health > 100) health = 100;
+        if(health < 0) health = 0;
+
+        series.push(health);
+    }
+
+    return series;
 }
 
 // ================= TREND =================
 function detectTrend(series){
-if(series.length<3) return "Stable";
-let r=series.slice(-3);
-let slope=(r[2]-r[0])/2;
-if(slope>0.5) return "Improving";
-if(slope<-0.5) return "Degrading";
-return "Stable";
+    if(!series || series.length < 3) return "Stable";
+
+    const r = series.slice(-3);
+    const slope = (r[2] - r[0]) / 2;
+
+    if(slope > 0.5) return "Improving";
+    if(slope < -0.5) return "Degrading";
+    return "Stable";
 }
 
-// ================= MOMENTUM =================
 function detectMomentum(series){
-let delta=series[series.length-1]-series[0];
-if(Math.abs(delta)<5) return "Weak";
-if(Math.abs(delta)<15) return "Moderate";
-return "Strong";
+    if(!series || series.length < 2) return "Weak";
+
+    const delta = series[series.length - 1] - series[0];
+    const absDelta = Math.abs(delta);
+
+    if(absDelta < 5) return "Weak";
+    if(absDelta < 15) return "Moderate";
+    return "Strong";
 }
 
-// ================= TIME TO RISK =================
-function timeToRisk(series){
-for(let i=0;i<series.length;i++){
-if(series[i]<40) return i+" months";
-}
-return "No immediate risk";
+// ================= RISK =================
+function classifyStatus(score){
+    if(score > 80) return "STABLE";
+    if(score > 60) return "WATCH";
+    if(score > 40) return "WARNING";
+    return "CRITICAL";
 }
 
-// ================= DRIVER RANK =================
+function statusColor(status){
+    if(status === "STABLE") return "green";
+    if(status === "WATCH") return "yellow";
+    if(status === "WARNING") return "orange";
+    return "red";
+}
+
+function statusMessage(status){
+    if(status === "STABLE") return "Reef conditions stable.";
+    if(status === "WATCH") return "Stress emerging.";
+    if(status === "WARNING") return "Health declining.";
+    return "Rapid degradation.";
+}
+
+function findThresholdCross(series, threshold){
+    for(let i=0;i<series.length;i++){
+        if(series[i] <= threshold) return i + 1;
+    }
+    return null;
+}
+
+function projectFutureRisk(T,A,N,S,L,currentScore,maxMonths){
+    let h = currentScore;
+
+    for(let m=1;m<=maxMonths;m++){
+        const d = monthlyDynamics(T,A,N,S,L);
+        h += d.net;
+
+        if(h > 100) h = 100;
+        if(h < 0) h = 0;
+
+        if(h <= 40) return "Critical risk within " + m + " months";
+        if(h <= 60) return "Warning risk within " + m + " months";
+    }
+
+    return "No threshold breach projected in next " + maxMonths + " months";
+}
+
+function buildRiskText(series, T,A,N,S,L){
+    const criticalNow = findThresholdCross(series, 40);
+    if(criticalNow !== null) return "Critical threshold reached in " + criticalNow + " months";
+
+    const warningNow = findThresholdCross(series, 60);
+    if(warningNow !== null) return "Warning threshold reached in " + warningNow + " months";
+
+    const current = series[series.length - 1];
+    return projectFutureRisk(T,A,N,S,L,current,12);
+}
+
+// ================= DRIVER RANKING =================
 function rankDrivers(T,A,N,S,L){
-let impacts = {
-Temperature: (T-27)*0.4,
-Aragonite: (4-A)*0.6,
-Nutrients: N*0.3,
-Sediment: S*0.4,
-Light: -L*0.2
-};
+    const impacts = {
+        Temperature: Math.max(0, T - 27) * 0.4,
+        Aragonite: Math.max(0, 4 - A) * 0.6,
+        Nutrients: Math.max(0, N) * 0.3,
+        Sediment: Math.max(0, S) * 0.4,
+        Light: Math.max(0, 8 - L) * 0.15
+    };
 
-return Object.entries(impacts)
-.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))
-.slice(0,3)
-.map(x=>x[0]);
+    return Object.entries(impacts)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0,3)
+        .map(x => x[0]);
+}
+
+// ================= LEGACY DRIVER FLAGS =================
+function getDriverFlags(T,A,N,S,L){
+    let drivers = [];
+    if(N > 5) drivers.push("nutrients");
+    if(S > 4) drivers.push("sediment");
+    if(T > 29) drivers.push("temperature");
+    if(A < 3.2) drivers.push("low aragonite");
+    if(L < 6) drivers.push("low light");
+    return drivers;
+}
+
+function buildRecommendations(drivers){
+    let rec = "";
+    if(drivers.includes("nutrients")) rec += "Reduce nutrient runoff. ";
+    if(drivers.includes("sediment")) rec += "Improve water clarity. ";
+    if(drivers.includes("temperature")) rec += "Monitor thermal stress. ";
+    if(drivers.includes("low aragonite")) rec += "Address acidification. ";
+    if(drivers.includes("low light")) rec += "Reduce turbidity. ";
+    if(rec === "") rec = "Maintain current conditions.";
+    return rec;
 }
 
 // ================= OPTIMIZATION ENGINE =================
 let actions = [
-{n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
-{n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
-{n:"Reduce Temp", f:(x)=>({...x,T:x.T-1})},
-{n:"Increase Ωarag", f:(x)=>({...x,A:x.A+0.5})}
+    { n:"Reduce Nutrients", f:(x)=>({...x, N:Math.max(0, x.N - 2)}) },
+    { n:"Reduce Sediment",  f:(x)=>({...x, S:Math.max(0, x.S - 2)}) },
+    { n:"Reduce Temp",      f:(x)=>({...x, T:Math.max(24, x.T - 1)}) },
+    { n:"Increase Ωarag",   f:(x)=>({...x, A:Math.min(4.2, x.A + 0.5)}) }
 ];
 
+function evaluateStrategy(base, selectedActions, months){
+    let state = { ...base };
+    let names = [];
+
+    for(const action of selectedActions){
+        state = action.f(state);
+        names.push(action.n);
+    }
+
+    let series = simulateSeries(state.T, state.A, state.N, state.S, state.L, months);
+    let rawFinal = series[series.length - 1];
+
+    let bonus = 0;
+    if(names.includes("Reduce Nutrients") && names.includes("Reduce Sediment")) bonus += 3;
+    if(names.includes("Reduce Temp") && names.includes("Increase Ωarag")) bonus += 2;
+
+    let penalty = 0;
+    if(selectedActions.length >= 3) penalty += (selectedActions.length - 2) * 4;
+    if(selectedActions.length === 4) penalty += 4;
+
+    let ceiling = 95;
+    if(state.T <= 27 && state.A >= 4 && state.N <= 2 && state.S <= 2 && state.L >= 8){
+        ceiling = 100;
+    }
+
+    let adjusted = Math.round(rawFinal + bonus - penalty);
+    if(adjusted > ceiling) adjusted = ceiling;
+    if(adjusted < 0) adjusted = 0;
+
+    return {
+        combo: names.join(" + "),
+        value: adjusted,
+        raw: Math.round(rawFinal),
+        actionCount: selectedActions.length
+    };
+}
+
 function runOptimization(T,A,N,S,L,months){
+    const base = { T, A, N, S, L };
+    let results = [];
 
-function sim(state){
-let s = simulateSeries(state.T,state.A,state.N,state.S,L,months);
-return Math.round(s[s.length-1]);
+    for(let i=1;i<(1<<actions.length);i++){
+        let selected = [];
+        for(let j=0;j<actions.length;j++){
+            if(i & (1<<j)) selected.push(actions[j]);
+        }
+        results.push(evaluateStrategy(base, selected, months));
+    }
+
+    results.sort((a,b)=>{
+        if(b.value !== a.value) return b.value - a.value;
+        return a.actionCount - b.actionCount;
+    });
+
+    return results;
 }
 
-let results=[];
+// ================= DECISION LAYER =================
+function buildDecision(status, trend, momentum, riskText, score){
+    if(status === "CRITICAL"){
+        return "IMMEDIATE ACTION — system already in critical condition.";
+    }
 
-for(let i=1;i<(1<<actions.length);i++){
+    if(status === "WARNING" && trend === "Degrading"){
+        return "URGENT PRIORITY — intervene now before critical threshold is reached.";
+    }
 
-let state={T:T,A:A,N:N,S:S};
-let names=[];
+    if(status === "WATCH" && trend === "Degrading" && momentum !== "Weak"){
+        return "PREEMPTIVE ACTION — conditions are worsening and should be addressed now.";
+    }
 
-for(let j=0;j<actions.length;j++){
-if(i&(1<<j)){
-state=actions[j].f(state);
-names.push(actions[j].n);
-}
-}
+    if(riskText.includes("within")){
+        return "FORWARD RISK DETECTED — intervention window is open but narrowing.";
+    }
 
-let val=sim(state);
-results.push({combo:names.join(" + "),value:val});
-}
+    if(status === "STABLE" && trend === "Improving"){
+        return "MAINTAIN COURSE — system is stable and improving.";
+    }
 
-results.sort((a,b)=>b.value-a.value);
-return results;
+    return "MONITOR CLOSELY — maintain surveillance and reassess conditions.";
 }
 
 // ================= MAIN =================
 function run(){
+    let T = parseFloat(document.getElementById("T").value);
+    let A = parseFloat(document.getElementById("A").value);
+    let N = parseFloat(document.getElementById("N").value);
+    let S = parseFloat(document.getElementById("S").value);
+    let L = parseFloat(document.getElementById("L").value);
+    let months = parseInt(document.getElementById("time").value);
 
-let T=parseFloat(document.getElementById("T").value);
-let A=parseFloat(document.getElementById("A").value);
-let N=parseFloat(document.getElementById("N").value);
-let S=parseFloat(document.getElementById("S").value);
-let L=parseFloat(document.getElementById("L").value);
-let months=parseInt(document.getElementById("time").value);
+    let series = simulateSeries(T,A,N,S,L,months);
+    let score = Math.round(series[series.length - 1]);
 
-// --- SERIES ---
-let series = simulateSeries(T,A,N,S,L,months);
-let score = Math.round(series[series.length-1]);
+    let status = classifyStatus(score);
+    let bg = statusColor(status);
+    let msg = statusMessage(status);
 
-// --- STATUS ---
-let status="",bg="",msg="";
+    let trend = detectTrend(series);
+    let momentum = detectMomentum(series);
+    let risk = buildRiskText(series, T,A,N,S,L);
 
-if(score>80){ status="STABLE"; bg="green"; msg="Reef conditions stable."; }
-else if(score>60){ status="WATCH"; bg="yellow"; msg="Stress emerging."; }
-else if(score>40){ status="WARNING"; bg="orange"; msg="Health declining."; }
-else{ status="CRITICAL"; bg="red"; msg="Rapid degradation."; }
+    let rankedDrivers = rankDrivers(T,A,N,S,L);
+    let drivers = getDriverFlags(T,A,N,S,L);
+    let driverText = drivers.length ? drivers.join(", ") : "none";
+    let rec = buildRecommendations(drivers);
 
-// --- TREND SYSTEM ---
-let trend = detectTrend(series);
-let momentum = detectMomentum(series);
-let risk = timeToRisk(series);
+    let results = runOptimization(T,A,N,S,L,months);
+    let decision = buildDecision(status, trend, momentum, risk, score);
 
-// --- DRIVERS ---
-let rankedDrivers = rankDrivers(T,A,N,S,L);
-
-// --- LEGACY DRIVER FLAGS (PRESERVED) ---
-let drivers=[];
-if(N>5) drivers.push("nutrients");
-if(S>4) drivers.push("sediment");
-if(T>29) drivers.push("temperature");
-if(A<3.2) drivers.push("low aragonite");
-if(L<6) drivers.push("low light");
-
-let driverText = drivers.length ? drivers.join(", ") : "none";
-
-// --- RECOMMENDATIONS ---
-let rec="";
-if(drivers.includes("nutrients")) rec+="Reduce nutrient runoff. ";
-if(drivers.includes("sediment")) rec+="Improve water clarity. ";
-if(drivers.includes("temperature")) rec+="Monitor thermal stress. ";
-if(drivers.includes("low aragonite")) rec+="Address acidification. ";
-if(drivers.includes("low light")) rec+="Reduce turbidity. ";
-if(rec==="") rec="Maintain current conditions.";
-
-// --- OUTPUT ---
-document.getElementById("output").innerHTML=`
+    document.getElementById("output").innerHTML = `
 <div class="status" style="background:${bg};color:black">
 ${status}
 </div>
@@ -196,7 +316,7 @@ Baseline Score: ${score}
 
 <br><br><b>Trend:</b> ${trend}
 <br><b>Momentum:</b> ${momentum}
-<br><b>Time to Risk:</b> ${risk}
+<br><b>Forward Risk:</b> ${risk}
 
 <br><br>${msg}
 
@@ -205,23 +325,18 @@ Baseline Score: ${score}
 <br><br><b>Drivers (Threshold Flags):</b> ${driverText}
 
 <br><br><b>Recommendation:</b> ${rec}
-`;
 
-// --- OPTIMIZATION OUTPUT ---
-let results = runOptimization(T,A,N,S,L,months);
+<br><br><b>Decision Priority:</b> ${decision}
 
-document.getElementById("output").innerHTML += `
 <br><br><b>Best Strategy:</b><br>
 ${results[0].combo} → ${results[0].value}
 
 <br><br><b>Top 5 Strategies:</b><br>
-${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
+${results.slice(0,5).map(r => r.combo + ": " + r.value).join("<br>")}
 `;
-
 }
 
-// ================= BUTTON =================
-document.getElementById("runBtn").addEventListener("click",run);
+document.getElementById("runBtn").addEventListener("click", run);
 
 </script>
 
