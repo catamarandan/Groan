@@ -1,3 +1,4 @@
+console.log("SST MODULE LOADED");
 // sst-ingestion.js
 // GROAN™ SST ingestion pipeline — complete drop-in file
 
