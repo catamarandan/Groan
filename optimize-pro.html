@@ -39,33 +39,68 @@ Time (months) <input id="time" value="12">
 
 <script>
 
-// --- BASE ENGINE ---
-function simulate(T,A,N,S,L,months){
+// ================= ENGINE (FIXED: RETURNS SERIES) =================
+function simulateSeries(T,A,N,S,L,months){
+
 let stress=Math.max(0,T-27)*0.4+(4-A)*0.6+N*0.3+S*0.4-L*0.2;
 let calc=Math.max(0,(A*2)-stress);
 
 let health=100;
+let series=[];
+
 for(let i=0;i<months;i++){
 health+=(calc*0.8)-(stress*1.5);
 if(health>100)health=100;
 if(health<0)health=0;
+series.push(health);
 }
-return health;
+
+return series;
 }
 
- function detectTrend(healthSeries) {
-    if (!healthSeries || healthSeries.length < 3) return "Stable";
+// ================= TREND =================
+function detectTrend(series){
+if(series.length<3) return "Stable";
+let r=series.slice(-3);
+let slope=(r[2]-r[0])/2;
+if(slope>0.5) return "Improving";
+if(slope<-0.5) return "Degrading";
+return "Stable";
+}
 
-    let recent = healthSeries.slice(-3);
+// ================= MOMENTUM =================
+function detectMomentum(series){
+let delta=series[series.length-1]-series[0];
+if(Math.abs(delta)<5) return "Weak";
+if(Math.abs(delta)<15) return "Moderate";
+return "Strong";
+}
 
-    let slope = (recent[2] - recent[0]) / 2;
+// ================= TIME TO RISK =================
+function timeToRisk(series){
+for(let i=0;i<series.length;i++){
+if(series[i]<40) return i+" months";
+}
+return "No immediate risk";
+}
 
-    if (slope > 0.5) return "Improving";
-    if (slope < -0.5) return "Degrading";
-    return "Stable";
-} 
+// ================= DRIVER RANK =================
+function rankDrivers(T,A,N,S,L){
+let impacts = {
+Temperature: (T-27)*0.4,
+Aragonite: (4-A)*0.6,
+Nutrients: N*0.3,
+Sediment: S*0.4,
+Light: -L*0.2
+};
 
-  // --- OPTIMIZATION ENGINE ---
+return Object.entries(impacts)
+.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))
+.slice(0,3)
+.map(x=>x[0]);
+}
+
+// ================= OPTIMIZATION ENGINE =================
 let actions = [
 {n:"Reduce Nutrients", f:(x)=>({...x,N:x.N-2})},
 {n:"Reduce Sediment", f:(x)=>({...x,S:x.S-2})},
@@ -76,16 +111,8 @@ let actions = [
 function runOptimization(T,A,N,S,L,months){
 
 function sim(state){
-let stress=Math.max(0,state.T-27)*0.4+(4-state.A)*0.6+state.N*0.3+state.S*0.4-L*0.2;
-let calc=Math.max(0,(state.A*2)-stress);
-
-let h=100;
-for(let i=0;i<months;i++){
-h+=(calc*0.8)-(stress*1.5);
-if(h>100)h=100;
-if(h<0)h=0;
-}
-return Math.round(h);
+let s = simulateSeries(state.T,state.A,state.N,state.S,L,months);
+return Math.round(s[s.length-1]);
 }
 
 let results=[];
@@ -110,7 +137,7 @@ results.sort((a,b)=>b.value-a.value);
 return results;
 }
 
-// --- MAIN RUN ---
+// ================= MAIN =================
 function run(){
 
 let T=parseFloat(document.getElementById("T").value);
@@ -120,7 +147,9 @@ let S=parseFloat(document.getElementById("S").value);
 let L=parseFloat(document.getElementById("L").value);
 let months=parseInt(document.getElementById("time").value);
 
-let score=Math.round(simulate(T,A,N,S,L,months));
+// --- SERIES ---
+let series = simulateSeries(T,A,N,S,L,months);
+let score = Math.round(series[series.length-1]);
 
 // --- STATUS ---
 let status="",bg="",msg="";
@@ -130,7 +159,15 @@ else if(score>60){ status="WATCH"; bg="yellow"; msg="Stress emerging."; }
 else if(score>40){ status="WARNING"; bg="orange"; msg="Health declining."; }
 else{ status="CRITICAL"; bg="red"; msg="Rapid degradation."; }
 
+// --- TREND SYSTEM ---
+let trend = detectTrend(series);
+let momentum = detectMomentum(series);
+let risk = timeToRisk(series);
+
 // --- DRIVERS ---
+let rankedDrivers = rankDrivers(T,A,N,S,L);
+
+// --- LEGACY DRIVER FLAGS (PRESERVED) ---
 let drivers=[];
 if(N>5) drivers.push("nutrients");
 if(S>4) drivers.push("sediment");
@@ -157,9 +194,15 @@ ${status}
 
 Baseline Score: ${score}
 
+<br><br><b>Trend:</b> ${trend}
+<br><b>Momentum:</b> ${momentum}
+<br><b>Time to Risk:</b> ${risk}
+
 <br><br>${msg}
 
-<br><br><b>Drivers:</b> ${driverText}
+<br><br><b>Top Drivers (Ranked):</b> ${rankedDrivers.join(", ")}
+
+<br><br><b>Drivers (Threshold Flags):</b> ${driverText}
 
 <br><br><b>Recommendation:</b> ${rec}
 `;
@@ -177,7 +220,7 @@ ${results.slice(0,5).map(r=>r.combo+": "+r.value).join("<br>")}
 
 }
 
-// --- BUTTON BIND ---
+// ================= BUTTON =================
 document.getElementById("runBtn").addEventListener("click",run);
 
 </script>
