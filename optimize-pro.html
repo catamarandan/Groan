@@ -41,17 +41,31 @@ Time (months) <input id="time" value="12">
 
 // ================= ENGINE =================
 function monthlyDynamics(T,A,N,S,L){
-    const thermal = Math.max(0, T - 27) * 0.4;
-    const aragDeficit = Math.max(0, 4 - A) * 0.6;
-    const nutrient = Math.max(0, N) * 0.3;
-    const sediment = Math.max(0, S) * 0.4;
-    const lightPenalty = Math.max(0, 8 - L) * 0.15;
 
-    const stress = thermal + aragDeficit + nutrient + sediment + lightPenalty;
-    const calc = Math.max(0, (A * 1.6) + (L * 0.12) - (thermal * 0.35));
-    const net = (calc * 0.65) - (stress * 1.1);
+    // --- NORMALIZED INPUTS ---
+    let t = (T - 27) / 3;          // 27–30 typical stress range
+    let a = (4 - A) / 1.5;         // aragonite deficit
+    let n = N / 10;                // scaled 0–1
+    let s = S / 10;                // scaled 0–1
+    let l = (8 - L) / 8;           // light penalty
 
-    return { stress, calc, net };
+    // --- STRESS COMPONENT ---
+    let stress =
+        (t * 0.35) +
+        (a * 0.30) +
+        (n * 0.20) +
+        (s * 0.25) +
+        (l * 0.15);
+
+    // --- CALCIFICATION / RECOVERY ---
+    let recovery =
+        (A / 4 * 0.6) +
+        (L / 10 * 0.3);
+
+    // --- NET EFFECT ---
+    let net = (recovery * 0.7) - (stress * 1.2);
+
+    return { stress, recovery, net };
 }
 
 function simulateSeries(T,A,N,S,L,months){
