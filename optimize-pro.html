@@ -3,12 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <title>GROAN™ Optimization Pro</title>
+
 <style>
 body { font-family: Arial; padding: 20px; }
-input { margin: 5px; }
-button { margin: 10px 0; }
-#sourceTag { font-weight: bold; margin-top: 10px; }
+
+input {
+  margin: 5px;
+  padding: 6px;
+  width: 120px;
+}
+
+button {
+  margin: 8px 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#sourceTag {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+pre {
+  background: #f4f4f4;
+  padding: 10px;
+}
 </style>
+
 </head>
 
 <body>
@@ -33,104 +54,99 @@ button { margin: 10px 0; }
 <label>Time (months)</label><br>
 <input id="time" type="number" value="12"><br>
 
-<button onclick="runGROAN()">Run GROAN</button>
+<br>
 
-<div id="sourceTag"></div>
+<button onclick="runManual()">Run GROAN (Manual)</button>
+<button onclick="runWithNOAA()">Run GROAN (NOAA)</button>
+
+<div id="sourceTag">Data Source: Manual</div>
+
+<h3>Output</h3>
 <pre id="output"></pre>
 
 <script>
 
-// ---------------- MULTI-VARIABLE INGEST ----------------
+// ---------------- NOAA FETCH ----------------
 
 const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
 const DATASET = "jplMURSST41";
 
-async function fetchEnvironmentalData(lat, lon) {
+async function fetchNOAA(lat, lon) {
     try {
-        const now = new Date();
-        const dateStr = now.toISOString().split("T")[0];
+        const today = new Date().toISOString().split("T")[0];
 
-        // --- TEMPERATURE ---
-        const query = `${NOAA_BASE_URL}${DATASET}.json?analysed_sst[(${dateStr}T00:00:00Z)][(${lat})][(${lon})]`;
-        const response = await fetch(query);
-        const data = await response.json();
+        const url = `${NOAA_BASE_URL}${DATASET}.json?analysed_sst[(${today}T00:00:00Z)][(${lat})][(${lon})]`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("NOAA fetch failed");
+
+        const data = await res.json();
 
         const tempK = data.table.rows[0][0];
         const tempC = tempK - 273.15;
 
-        // --- PROXY VARIABLES (TEMPORARY STRUCTURE) ---
-        const nutrients = clamp((tempC - 26) * 1.5, 0, 10);
-        const sediment = clamp((tempC - 27) * 1.2, 0, 10);
-        const light = clamp(10 - (tempC - 26), 0, 10);
+        return round(tempC, 2);
 
-        return {
-            temperature_c: round(tempC, 2),
-            nutrients: round(nutrients, 2),
-            sediment: round(sediment, 2),
-            light: round(light, 2),
-            source: "NOAA MULTI-VARIABLE (TEMP + PROXY)",
-            timestamp: now.toISOString()
-        };
-
-    } catch (err) {
-        console.error("ENV DATA ERROR:", err);
+    } catch (e) {
+        console.error("NOAA ERROR:", e);
         return null;
+    }
+}
+
+// ---------------- RUN MODES ----------------
+
+function runManual() {
+    runEngine("MANUAL");
+}
+
+async function runWithNOAA() {
+
+    const lat = 9.35;
+    const lon = -82.25;
+
+    const temp = await fetchNOAA(lat, lon);
+
+    if (temp !== null) {
+        document.getElementById("temp").value = temp;
+        runEngine("NOAA LIVE");
+    } else {
+        alert("NOAA failed. Using manual values.");
+        runEngine("MANUAL");
     }
 }
 
 // ---------------- ENGINE ----------------
 
-async function runGROAN() {
+function runEngine(sourceLabel) {
 
-    const lat = 9.35;
-    const lon = -82.25;
-
-    const env = await fetchEnvironmentalData(lat, lon);
-
-    let tempInput, nutrients, sediment, light, sourceLabel;
-
-    if (env) {
-        tempInput = env.temperature_c;
-        nutrients = env.nutrients;
-        sediment = env.sediment;
-        light = env.light;
-
-        document.getElementById("temp").value = tempInput;
-        document.getElementById("nutrients").value = nutrients;
-        document.getElementById("sediment").value = sediment;
-        document.getElementById("light").value = light;
-
-        sourceLabel = env.source;
-    } else {
-        tempInput = parseFloat(document.getElementById("temp").value);
-        nutrients = parseFloat(document.getElementById("nutrients").value);
-        sediment = parseFloat(document.getElementById("sediment").value);
-        light = parseFloat(document.getElementById("light").value);
-
-        sourceLabel = "MANUAL INPUT";
-    }
-
-    document.getElementById("sourceTag").innerText = "Data Source: " + sourceLabel;
-
-    const T = convertTemperatureToStress(tempInput);
-    const O = parseFloat(document.getElementById("omega").value);
+    const temp = parseFloat(document.getElementById("temp").value);
+    const omega = parseFloat(document.getElementById("omega").value);
+    const nutrients = parseFloat(document.getElementById("nutrients").value);
+    const sediment = parseFloat(document.getElementById("sediment").value);
+    const light = parseFloat(document.getElementById("light").value);
     const time = parseInt(document.getElementById("time").value);
+
+    const T = convertTemperatureToStress(temp);
 
     let health = 100;
     let trajectory = [];
 
     for (let i = 0; i < time; i++) {
+
         let stress = (T + nutrients + sediment) / 3;
-        let recovery = (O + light) / 2;
+        let recovery = (omega + light) / 2;
 
         health += (recovery - stress);
         health = clamp(health, 0, 100);
+
         trajectory.push(round(health, 2));
     }
 
     const trend = detectTrend(trajectory);
     const momentum = detectMomentum(trajectory);
     const status = classifyStatus(health, trend);
+
+    document.getElementById("sourceTag").innerText = "Data Source: " + sourceLabel;
 
     document.getElementById("output").innerText =
         JSON.stringify({
@@ -145,11 +161,11 @@ async function runGROAN() {
 
 // ---------------- HELPERS ----------------
 
-function convertTemperatureToStress(tempC) {
-    if (tempC < 26) return 2;
-    if (tempC < 28) return 4;
-    if (tempC < 30) return 6;
-    if (tempC < 31) return 8;
+function convertTemperatureToStress(temp) {
+    if (temp < 26) return 2;
+    if (temp < 28) return 4;
+    if (temp < 30) return 6;
+    if (temp < 31) return 8;
     return 10;
 }
 
