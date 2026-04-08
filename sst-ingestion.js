@@ -1,107 +1,110 @@
-// GROAN™ SST INGESTION MODULE (Task 3)
-// NOAA ERDDAP → GROAN Temperature Pipeline
+// sst-ingestion.js
+// GROAN™ SST ingestion pipeline — complete drop-in file
 
-// =============================
-// CONFIG
-// =============================
-const GROAN_SST_CONFIG = {
+const GROAN = window.GROAN || {};
+window.GROAN = GROAN;
+
+GROAN.data = GROAN.data || {};
+GROAN.data.sst = GROAN.data.sst || {};
+GROAN.DATA_LAYER = GROAN.DATA_LAYER || {};
+GROAN.DATA_LAYER.SST = GROAN.data.sst;
+
+GROAN.data.sst.config = {
   dataset: "jplMURSST41",
   baseUrl: "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
   minTemp: 24,
   maxTemp: 32
 };
 
-// =============================
-// FETCH SST (NOAA ERDDAP)
-// =============================
-async function fetchSST(lat, lon) {
-  const url = `${GROAN_SST_CONFIG.baseUrl}/${GROAN_SST_CONFIG.dataset}.json?analysed_sst[(last)][(${lat})][(${lon})]`;
+GROAN.data.sst.sstFetch = async function (lat, lon) {
+  const { baseUrl, dataset } = GROAN.data.sst.config;
+  const url = `${baseUrl}/${dataset}.json?analysed_sst[(last)][(${lat})][(${lon})]`;
 
   try {
     const res = await fetch(url);
-    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
-    const kelvin = data.table.rows[0][3];
+    const data = await res.json();
+    const row = data?.table?.rows?.[0];
+    if (!row || typeof row[3] !== "number") {
+      throw new Error("Invalid SST response structure");
+    }
+
+    const kelvin = row[3];
     const celsius = kelvin - 273.15;
 
     return {
       sst: parseFloat(celsius.toFixed(2)),
       source: "NOAA ERDDAP",
-      timestamp: new Date().toISOString()
+      dataset,
+      timestamp: new Date().toISOString(),
+      lat,
+      lon
     };
-
   } catch (err) {
     console.error("SST fetch error:", err);
     return null;
   }
-}
+};
 
-// =============================
-// NORMALIZE → GROAN SCALE (0–10)
-// =============================
-function normalizeTemperature(sst) {
-  const min = GROAN_SST_CONFIG.minTemp;
-  const max = GROAN_SST_CONFIG.maxTemp;
-
-  let normalized = (sst - min) / (max - min);
+GROAN.data.sst.sstNormalize = function (sst) {
+  const { minTemp, maxTemp } = GROAN.data.sst.config;
+  let normalized = (sst - minTemp) / (maxTemp - minTemp);
   normalized = Math.max(0, Math.min(1, normalized));
-
   return parseFloat((normalized * 10).toFixed(2));
-}
+};
 
-// =============================
-// INJECT INTO GROAN ENGINE
-// =============================
-async function injectSST(lat, lon) {
-  const sstData = await fetchSST(lat, lon);
+GROAN.data.sst.sstInject = async function (lat, lon) {
+  const sstData = await GROAN.data.sst.sstFetch(lat, lon);
   if (!sstData) return null;
 
-  const T = normalizeTemperature(sstData.sst);
+  const T = GROAN.data.sst.sstNormalize(sstData.sst);
 
-  if (typeof GROAN_INPUT !== "undefined") {
-    GROAN_INPUT.temperature = T;
+  if (typeof window.GROAN_INPUT === "undefined") {
+    window.GROAN_INPUT = {};
   }
+  window.GROAN_INPUT.temperature = T;
 
   return {
     raw_sst: sstData.sst,
     normalized_T: T,
     timestamp: sstData.timestamp,
-    source: sstData.source
+    source: sstData.source,
+    dataset: sstData.dataset,
+    lat: sstData.lat,
+    lon: sstData.lon
   };
-}
+};
 
-// =============================
-// UI INTEGRATION
-// =============================
-function initSSTToggle(currentLat, currentLon) {
+GROAN.data.sst.updateUI = function (data) {
+  const sstEl = document.getElementById("sstValue");
+  const normEl = document.getElementById("tempNormalized");
+  const timeEl = document.getElementById("sstTimestamp");
+
+  if (sstEl) sstEl.textContent = `${data.raw_sst} °C`;
+  if (normEl) normEl.textContent = `${data.normalized_T}`;
+  if (timeEl) timeEl.textContent = `${data.timestamp} (${data.source})`;
+};
+
+GROAN.data.sst.initToggle = function (currentLat, currentLon) {
   const toggle = document.getElementById("liveSSTToggle");
   if (!toggle) return;
 
   toggle.addEventListener("change", async (e) => {
     if (e.target.checked) {
-      const result = await injectSST(currentLat, currentLon);
-      if (result) updateUIWithSST(result);
+      const result = await GROAN.data.sst.sstInject(currentLat, currentLon);
+      if (result) {
+        GROAN.data.sst.updateUI(result);
+      }
     }
   });
-}
+};
 
-// =============================
-// UI UPDATE HANDLER
-// =============================
-function updateUIWithSST(data) {
-  const sstEl = document.getElementById("sstValue");
-  const normEl = document.getElementById("tempNormalized");
-  const timeEl = document.getElementById("sstTimestamp");
-
-  if (sstEl) sstEl.innerText = `${data.raw_sst} °C`;
-  if (normEl) normEl.innerText = `${data.normalized_T}`;
-  if (timeEl) timeEl.innerText = `${data.timestamp} (${data.source})`;
-}
-
-// =============================
-// HTML SNIPPET (REQUIRED)
-// =============================
 /*
+Required HTML snippet:
+
 <label>
   <input type="checkbox" id="liveSSTToggle">
   Use Live SST (NOAA)
@@ -112,14 +115,10 @@ function updateUIWithSST(data) {
   T (0–10): <span id="tempNormalized">--</span><br>
   Time: <span id="sstTimestamp">--</span>
 </div>
-*/
 
-// =============================
-// EXPORT (OPTIONAL)
-// =============================
-export {
-  fetchSST,
-  normalizeTemperature,
-  injectSST,
-  initSSTToggle
-};
+Example call:
+GROAN.data.sst.initToggle(18.5, -87.2);
+
+Direct injection call:
+await GROAN.data.sst.sstInject(18.5, -87.2);
+*/
