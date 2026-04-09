@@ -542,8 +542,6 @@ async function fetchNOAATemperature(lat, lon) {
     const normalized = GROAN.data.sst.sstNormalize(raw);
 
     document.getElementById("temp").value = normalized;
-    GROAN_INPUT.temperature = normalized;
-
     return normalized;
 
   } catch (err) {
