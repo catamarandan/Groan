@@ -1,132 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>GROAN™ Optimization Pro</title>
-  <script src="sst-ingestion.js?v=3"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>GROAN™ Optimization Pro</title>
+<script src="sst-ingestion.js?v=3"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --border: #d7deea;
-      --text: #16324f;
-      --muted: #5f7288;
-      --accent: #1f6fb2;
-      --accent-dark: #155588;
-      --good: #1d7a46;
-      --watch: #9a6700;
-      --warn: #b54708;
-      --bad: #b42318;
-      --shadow: 0 10px 30px rgba(20, 42, 74, 0.08);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, #eef4fa 0%, #f8fbfe 100%);
-      color: var(--text);
-      padding: 24px;
-    }
-
-    .wrap {
-      max-width: 1240px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #173b63 0%, #245c92 100%);
-      color: #fff;
-      border-radius: 18px;
-      padding: 24px 28px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px 0;
-      font-size: 2rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 20px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .btn-row { display:flex; gap:10px; margin-top:10px; }
-
-    button {
-      border:0;
-      border-radius:10px;
-      padding:10px 14px;
-      cursor:pointer;
-    }
-
-    .btn-primary { background:var(--accent); color:#fff; }
-    .btn-secondary { background:#eaf1f8; }
-    .btn-danger { background:#f7ecec; }
-
-  </style>
+<style>
+body { font-family: Arial; padding:20px; }
+button { margin:5px; padding:8px; }
+</style>
 </head>
 
 <body>
 
-<div class="wrap">
-  <section class="hero">
-    <h1>GROAN™ Optimization Pro</h1>
-  </section>
+<h2>GROAN™ Optimization Pro</h2>
 
-  <div class="grid">
+Temperature <input id="temp" value="28"><br>
+Omega <input id="omega" value="3.5"><br>
+Nutrients <input id="nutrients" value="3"><br>
+Sediment <input id="sediment" value="2"><br>
+Light <input id="light" value="8"><br>
+Time <input id="time" value="12"><br><br>
 
-    <section class="panel">
-      <h2>Inputs</h2>
+<button onclick="runManual()">Run Manual</button>
+<button onclick="runWithNOAA()">Run NOAA</button>
+<button onclick="loadNOAATemp()">Load NOAA</button>
 
-      <label>Temperature</label>
-      <input id="temp" type="number" value="28">
+<br><br>
 
-      <label>Omega</label>
-      <input id="omega" type="number" value="3.5">
-
-      <label>Nutrients</label>
-      <input id="nutrients" type="number" value="3">
-
-      <label>Sediment</label>
-      <input id="sediment" type="number" value="2">
-
-      <label>Light</label>
-      <input id="light" type="number" value="8">
-
-      <label>Time</label>
-      <input id="time" type="number" value="12">
-
-      <div class="btn-row">
-        <button class="btn-primary" onclick="runManual()">Manual</button>
-        <button class="btn-secondary" onclick="runWithNOAA()">NOAA</button>
-        <button class="btn-secondary" onclick="loadNOAATemp()">Load NOAA</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Output</h2>
-      <div>Source: <span id="sourceTag">Manual</span></div>
-      <div>Health: <span id="healthTag">-</span></div>
-      <div>Status: <span id="statusTag">-</span></div>
-    </section>
-
-  </div>
-</div>
+<div>Source: <span id="sourceTag">Manual</span></div>
+<div>Health: <span id="healthTag">-</span></div>
+<div>Status: <span id="statusTag">-</span></div>
 
 <script>
 
@@ -134,8 +39,10 @@ const NOAA_LAT = 9.35;
 const NOAA_LON = -82.25;
 const NOAA_LABEL = "NOAA SST";
 
-function round(val, dec=2){
-  return Number(Math.round(val + "e"+dec)+"e-"+dec);
+/* ===== CORE UTIL ===== */
+
+function round(val, dec = 2) {
+  return Number(Math.round(val + "e" + dec) + "e-" + dec);
 }
 
 function clamp(v,min,max){
@@ -146,41 +53,49 @@ function safeNumber(id){
   return parseFloat(document.getElementById(id).value);
 }
 
+/* ===== NOAA FIXED ===== */
+
 async function fetchNOAATemperature(){
   try{
     if(!window.GROAN || !GROAN.data?.sst){
-      throw new Error("SST not loaded");
+      throw new Error("SST module missing");
     }
 
     const raw = await GROAN.data.sst.sstFetch(NOAA_LAT,NOAA_LON);
     const norm = GROAN.data.sst.sstNormalize(raw);
 
-    if(!norm || norm<=0){
-      throw new Error("Bad SST");
+    if(!norm || norm <= 0){
+      throw new Error("Bad SST value");
     }
 
-    const tempC = norm>100 ? norm-273.15 : norm;
+    const tempC = norm > 100 ? norm - 273.15 : norm;
+
     return round(tempC,2);
 
-  }catch(e){
-    console.error(e);
+  } catch(e){
+    console.error("NOAA ERROR:", e);
     return null;
   }
 }
 
+/* ===== BUTTONS ===== */
+
 async function loadNOAATemp(){
   const t = await fetchNOAATemperature();
   if(t===null) return;
+
   document.getElementById("temp").value = t;
   runEngine(NOAA_LABEL);
 }
 
 async function runWithNOAA(){
   const t = await fetchNOAATemperature();
+
   if(t===null){
     runEngine("Manual");
     return;
   }
+
   document.getElementById("temp").value = t;
   runEngine(NOAA_LABEL);
 }
@@ -188,6 +103,8 @@ async function runWithNOAA(){
 function runManual(){
   runEngine("Manual");
 }
+
+/* ===== ENGINE ===== */
 
 function classifyStatus(h){
   if(h>=75) return "Stable";
@@ -217,8 +134,15 @@ function runEngine(source){
   document.getElementById("sourceTag").textContent = source;
   document.getElementById("healthTag").textContent = round(health,2);
   document.getElementById("statusTag").textContent = status;
-
 }
+
+/* ===== GLOBAL BIND (CRITICAL FIX) ===== */
+
+window.runManual = runManual;
+window.runWithNOAA = runWithNOAA;
+window.loadNOAATemp = loadNOAATemp;
+
+/* ===== INIT ===== */
 
 runManual();
 
