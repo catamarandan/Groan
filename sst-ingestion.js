@@ -18,7 +18,7 @@ GROAN.data.sst.config = {
 };
 
 GROAN.data.sst.sstFetch = async function (lat, lon) {
-  const { baseUrl, dataset } = GROAN.data.sst.config;
+  const url = `${baseUrl}/${dataset}.json?analysed_sst[(last)][(${lat})][(${lon})]`;
   const url = `https://corsproxy.io/?${baseUrl}/${dataset}.json?analysed_sst[(last)][(${lat})][(${lon})]`;
 
   try {
