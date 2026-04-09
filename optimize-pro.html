@@ -375,13 +375,11 @@
 
   <script>
     const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
-    const NOAA_DATASET = "jplMURSST41";
-    const NOAA_LAT = 9.35;
-    const NOAA_LON = -82.25;
+const NOAA_DATASET = "jplMURSST41";
+const NOAA_LAT = 9.35;
+const NOAA_LON = -82.25;
 
-    function round(val, dec = 2) {
-      return Number(Math.round(val + "e" + dec) + "e-" + dec);
-    }
+const NOAA_LABEL = "NOAA SST";
 
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
