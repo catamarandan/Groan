@@ -536,18 +536,26 @@
       });
     }
 
-    async function fetchNOAATemperature(lat, lon) {
-      try {
-        const today = new Date().toISOString().split("T")[0];
-        const url = `${NOAA_BASE_URL}${NOAA_DATASET}.json?analysed_sst[(${today}T00:00:00Z)][(${lat})][(${lon})]`;
+    async function fetchNOAATemperature() {
+  try {
 
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error("NOAA fetch failed");
+    if (!GROAN || !GROAN.data || !GROAN.data.sst) {
+      throw new Error("SST module not loaded");
+    }
 
-        const data = await response.json();
-        if (!data.table || !data.table.rows || !data.table.rows.length) {
-          throw new Error("NOAA returned no rows");
-        }
+    const raw = await GROAN.data.sst.sstFetch();
+    const normalized = GROAN.data.sst.sstNormalize(raw);
+    GROAN.data.sst.sstInject(normalized);
+
+    document.getElementById("temperature").value = GROAN_INPUT.temperature;
+
+    alert("NOAA SST Loaded: " + GROAN_INPUT.temperature);
+
+  } catch (err) {
+    console.error(err);
+    alert("NOAA link failed");
+  }
+}
 
         const tempK = data.table.rows[0][0];
         return round(tempK - 273.15, 2);
