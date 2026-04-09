@@ -374,7 +374,7 @@
   </div>
 
   <script>
-    const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
+const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
 const NOAA_DATASET = "jplMURSST41";
 const NOAA_LAT = 9.35;
 const NOAA_LON = -82.25;
@@ -383,7 +383,9 @@ const NOAA_LABEL = "NOAA SST";
     function round(val, dec = 2) {
   return Number(Math.round(val + "e" + dec) + "e-" + dec);
 }
-
+function round(val, dec = 2) {
+  return Number(Math.round(val + "e" + dec) + "e-" + dec);
+}
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
     }
@@ -536,11 +538,17 @@ function classifyStatus(health, trend) {
       });
     }
 
-    async function fetchNOAATemperature() {
-      try {
-        if (!window.GROAN || !GROAN.data || !GROAN.data.sst || typeof GROAN.data.sst.sstFetch !== "function" || typeof GROAN.data.sst.sstNormalize !== "function") {
-          throw new Error("sst-ingestion.js is not loaded or GROAN.data.sst is unavailable.");
-        }
+ async function loadNOAATemp() {
+  const temp = await fetchNOAATemperature();
+
+  if (temp === null) {
+    alert("NOAA temperature fetch failed.");
+    return;
+  }
+
+  document.getElementById("temp").value = temp;
+  runEngine(NOAA_LABEL);
+}
 
         const raw = await GROAN.data.sst.sstFetch(NOAA_LAT, NOAA_LON);
         const normalized = GROAN.data.sst.sstNormalize(raw);
