@@ -125,7 +125,7 @@
       const btn = event.target;
       btn.innerText = "Loading...";
       try {
-        const res = await fetch("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]");
+        const url = "https://cors-anywhere.herokuapp.com/https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
         const data = await res.json();
         const tempC = data.table.rows[0][0] - 273.15;
         document.getElementById('temp').value = tempC.toFixed(2);
