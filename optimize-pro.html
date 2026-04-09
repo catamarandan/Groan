@@ -1,12 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>GROAN™ Optimization Pro</title>
-  <script src="sst-ingestion.js?v=3"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <style>
     :root {
       --bg: #f4f7fb;
@@ -22,9 +19,7 @@
       --bad: #b42318;
       --shadow: 0 10px 30px rgba(20, 42, 74, 0.08);
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
@@ -32,12 +27,10 @@
       color: var(--text);
       padding: 24px;
     }
-
     .wrap {
       max-width: 1240px;
       margin: 0 auto;
     }
-
     .hero {
       background: linear-gradient(135deg, #173b63 0%, #245c92 100%);
       color: #fff;
@@ -46,26 +39,22 @@
       box-shadow: var(--shadow);
       margin-bottom: 20px;
     }
-
     .hero h1 {
       margin: 0 0 8px 0;
       font-size: 2rem;
       letter-spacing: 0.2px;
     }
-
     .hero p {
       margin: 0;
       color: rgba(255,255,255,0.88);
       font-size: 1rem;
     }
-
     .grid {
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 20px;
       align-items: start;
     }
-
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -73,25 +62,21 @@
       padding: 20px;
       box-shadow: var(--shadow);
     }
-
     .panel h2 {
       margin: 0 0 16px 0;
       font-size: 1.3rem;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 12px;
     }
-
     .field label {
       display: block;
       margin-bottom: 6px;
       font-weight: 700;
       color: var(--text);
     }
-
     .field input,
     .field select {
       width: 100%;
@@ -101,21 +86,18 @@
       font-size: 1rem;
       background: #fff;
     }
-
     .field input:focus,
     .field select:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(31, 111, 178, 0.12);
     }
-
     .btn-row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 8px;
     }
-
     button {
       border: 0;
       border-radius: 10px;
@@ -123,43 +105,37 @@
       font-size: 0.98rem;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.2s;
     }
-
     .btn-primary {
       background: var(--accent);
       color: #fff;
     }
-
     .btn-primary:hover {
       background: var(--accent-dark);
     }
-
     .btn-secondary {
       background: #eaf1f8;
       color: var(--text);
       border: 1px solid #d5e1ee;
     }
-
     .btn-danger {
       background: #f7ecec;
       color: #7c1c1c;
       border: 1px solid #ead0d0;
     }
-
     .statusbar {
       display: grid;
       grid-template-columns: repeat(4, minmax(150px, 1fr));
       gap: 12px;
       margin-bottom: 16px;
     }
-
     .mini {
       background: #f8fbff;
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
     }
-
     .mini .k {
       font-size: 0.82rem;
       color: var(--muted);
@@ -167,30 +143,25 @@
       text-transform: uppercase;
       letter-spacing: 0.4px;
     }
-
     .mini .v {
       font-size: 1.05rem;
       font-weight: 700;
     }
-
     .output-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
     }
-
     .box {
       background: #fbfdff;
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 16px;
     }
-
     .box h3 {
       margin: 0 0 10px 0;
       font-size: 1.05rem;
     }
-
     pre {
       margin: 0;
       white-space: pre-wrap;
@@ -199,505 +170,10 @@
       font-size: 0.93rem;
       color: #17324f;
     }
-
     .trajectory-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
       gap: 8px;
     }
-
     .month-chip {
-      background: #eef5fc;
-      border: 1px solid #d8e4f0;
-      border-radius: 10px;
-      padding: 8px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    .month-chip strong {
-      display: block;
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .good { color: var(--good); }
-    .watch { color: var(--watch); }
-    .warn { color: var(--warn); }
-    .bad  { color: var(--bad); }
-
-    .note {
-      margin-top: 14px;
-      font-size: 0.92rem;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .driver-list {
-      margin: 0;
-      padding-left: 18px;
-    }
-
-    .driver-list li {
-      margin-bottom: 6px;
-    }
-
-    @media (max-width: 980px) {
-      .grid,
-      .output-grid,
-      .statusbar {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <section class="hero">
-      <h1>GROAN™ Optimization Pro</h1>
-      <p>Dynamic reef health trajectory, trend, momentum, forward risk, decision support, and optional NOAA-assisted temperature input.</p>
-    </section>
-
-    <div class="grid">
-      <section class="panel">
-        <h2>Inputs</h2>
-
-        <div class="form-grid">
-          <div class="field">
-            <label for="preset">Scenario Preset</label>
-            <select id="preset" onchange="applyPreset()">
-              <option value="custom">Custom</option>
-              <option value="healthy">Healthy / Resilient</option>
-              <option value="watch">Watch Condition</option>
-              <option value="warning">Warning Condition</option>
-              <option value="critical">Critical Condition</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="temp">Temperature (°C)</label>
-            <input id="temp" type="number" step="0.1" value="28" />
-          </div>
-
-          <div class="field">
-            <label for="omega">Aragonite Saturation (Ωarag)</label>
-            <input id="omega" type="number" step="0.1" value="3.5" />
-          </div>
-
-          <div class="field">
-            <label for="nutrients">Nutrients (0–10)</label>
-            <input id="nutrients" type="number" step="0.1" value="3" />
-          </div>
-
-          <div class="field">
-            <label for="sediment">Sediment (0–10)</label>
-            <input id="sediment" type="number" step="0.1" value="2" />
-          </div>
-
-          <div class="field">
-            <label for="light">Light (0–10)</label>
-            <input id="light" type="number" step="0.1" value="8" />
-          </div>
-
-          <div class="field">
-            <label for="time">Time Horizon (months)</label>
-            <input id="time" type="number" step="1" value="12" />
-          </div>
-        </div>
-
-        <div class="btn-row">
-          <button class="btn-primary" onclick="runManual()">Run GROAN (Manual)</button>
-          <button class="btn-secondary" onclick="runWithNOAA()">Run GROAN (NOAA)</button>
-          <button class="btn-secondary" onclick="loadNOAATemp()">Load NOAA Temperature</button>
-          <button class="btn-danger" onclick="resetForm()">Reset</button>
-        </div>
-
-        <div class="note">
-          NOAA demo coordinates are currently fixed to the Bocas region:
-          <strong>9.35, -82.25</strong><br>
-          NOAA input is treated as the latest available data, not true real-time.
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Output</h2>
-
-        <div class="statusbar">
-          <div class="mini">
-            <div class="k">Data Source</div>
-            <div class="v" id="sourceTag">Manual Input</div>
-          </div>
-          <div class="mini">
-            <div class="k">Final Health</div>
-            <div class="v" id="healthTag">—</div>
-          </div>
-          <div class="mini">
-            <div class="k">Status</div>
-            <div class="v" id="statusTag">—</div>
-          </div>
-          <div class="mini">
-            <div class="k">Forward Risk</div>
-            <div class="v" id="riskTag">—</div>
-          </div>
-        </div>
-
-        <div class="output-grid">
-          <div class="box">
-            <h3>System Summary</h3>
-            <pre id="summaryOutput">Run GROAN to generate output.</pre>
-          </div>
-
-          <div class="box">
-            <h3>Trajectory</h3>
-            <div id="trajectoryOutput" class="trajectory-list"></div>
-          </div>
-        </div>
-
-        <div class="output-grid" style="margin-top:16px;">
-          <div class="box">
-            <h3>Top Drivers</h3>
-            <ol id="driversOutput" class="driver-list"></ol>
-          </div>
-
-          <div class="box">
-            <h3>Decision Recommendation</h3>
-            <pre id="decisionOutput">Awaiting run.</pre>
-          </div>
-        </div>
-
-        <div class="box" style="margin-top:16px;">
-          <h3>Raw JSON</h3>
-          <pre id="jsonOutput">Awaiting run.</pre>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <script>
-    const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
-    const NOAA_DATASET = "jplMURSST41";
-    const NOAA_LAT = 9.35;
-    const NOAA_LON = -82.25;
-
-    function round(val, dec = 2) {
-      return Number(Math.round(val + "e" + dec) + "e-" + dec);
-    }
-
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
-    }
-
-    function safeNumber(id) {
-      return parseFloat(document.getElementById(id).value);
-    }
-
-    function applyPreset() {
-      const preset = document.getElementById("preset").value;
-
-      const presets = {
-        custom:   { temp: 28.0, omega: 3.5, nutrients: 3.0, sediment: 2.0, light: 8.0, time: 12 },
-        healthy:  { temp: 27.0, omega: 3.9, nutrients: 2.0, sediment: 1.5, light: 9.0, time: 12 },
-        watch:    { temp: 29.0, omega: 3.2, nutrients: 4.5, sediment: 3.5, light: 7.0, time: 12 },
-        warning:  { temp: 30.0, omega: 2.8, nutrients: 6.0, sediment: 5.0, light: 6.0, time: 12 },
-        critical: { temp: 31.0, omega: 2.4, nutrients: 8.0, sediment: 7.0, light: 4.0, time: 12 }
-      };
-
-      const p = presets[preset];
-      document.getElementById("temp").value = p.temp;
-      document.getElementById("omega").value = p.omega;
-      document.getElementById("nutrients").value = p.nutrients;
-      document.getElementById("sediment").value = p.sediment;
-      document.getElementById("light").value = p.light;
-      document.getElementById("time").value = p.time;
-    }
-
-    function resetForm() {
-      document.getElementById("preset").value = "custom";
-      applyPreset();
-
-      document.getElementById("sourceTag").textContent = "Manual Input";
-      document.getElementById("healthTag").textContent = "—";
-      document.getElementById("statusTag").textContent = "—";
-      document.getElementById("statusTag").className = "v";
-      document.getElementById("riskTag").textContent = "—";
-      document.getElementById("summaryOutput").textContent = "Run GROAN to generate output.";
-      document.getElementById("trajectoryOutput").innerHTML = "";
-      document.getElementById("driversOutput").innerHTML = "";
-      document.getElementById("decisionOutput").textContent = "Awaiting run.";
-      document.getElementById("jsonOutput").textContent = "Awaiting run.";
-    }
-
-    function convertTemperatureToStress(tempC) {
-      if (tempC < 26) return 2;
-      if (tempC < 28) return 4;
-      if (tempC < 30) return 6;
-      if (tempC < 31) return 8;
-      return 10;
-    }
-
-    function omegaToRecovery(omega) {
-      return clamp((omega / 4.5) * 10, 0, 10);
-    }
-
-    function lightToRecovery(light) {
-      return clamp(light, 0, 10);
-    }
-
-    function detectTrend(arr) {
-      if (arr.length < 2) return "Stable";
-      const delta = arr[arr.length - 1] - arr[0];
-      if (delta > 1) return "Improving";
-      if (delta < -1) return "Degrading";
-      return "Stable";
-    }
-
-    function detectMomentum(arr) {
-      if (arr.length < 2) return "Weak";
-      const delta = arr[arr.length - 1] - arr[arr.length - 2];
-      const mag = Math.abs(delta);
-      if (mag < 0.5) return "Weak";
-      if (mag < 1.5) return "Moderate";
-      return "Strong";
-    }
-
-    function classifyStatus(health, trend) {
-      if (health >= 75 && trend === "Improving") return "Stable";
-      if (health >= 55) return "Watch";
-      if (health >= 35) return "Warning";
-      return "Critical";
-    }
-
-    function getStatusClass(status) {
-      if (status === "Stable") return "good";
-      if (status === "Watch") return "watch";
-      if (status === "Warning") return "warn";
-      return "bad";
-    }
-
-    function getForwardRisk(trajectory) {
-      for (let i = 0; i < trajectory.length; i++) {
-        if (trajectory[i] <= 35) return `Critical in ${i + 1} mo`;
-        if (trajectory[i] <= 55) return `Warning in ${i + 1} mo`;
-      }
-      return "No breach in horizon";
-    }
-
-    function rankDrivers(Tstress, nutrients, sediment, omega, light) {
-      const drivers = [
-        { name: "Temperature", value: Tstress },
-        { name: "Nutrients", value: nutrients },
-        { name: "Sediment", value: sediment },
-        { name: "Low Aragonite", value: round(clamp(10 - omegaToRecovery(omega), 0, 10), 2) },
-        { name: "Low Light", value: round(clamp(10 - lightToRecovery(light), 0, 10), 2) }
-      ];
-
-      drivers.sort((a, b) => b.value - a.value);
-      return drivers.slice(0, 3);
-    }
-
-    function getDecision(status, trend, momentum, topDrivers) {
-      const lead = topDrivers[0] ? topDrivers[0].name : "primary stressor";
-
-      if (status === "Critical") {
-        return `Immediate intervention required. Primary focus: ${lead}.`;
-      }
-      if (status === "Warning" && trend === "Degrading") {
-        return `Urgent action recommended. The system is degrading with ${momentum.toLowerCase()} momentum. Priority driver: ${lead}.`;
-      }
-      if (status === "Watch" && trend === "Degrading") {
-        return `Preemptive action recommended. Trajectory is degrading. Priority driver: ${lead}.`;
-      }
-      if (trend === "Improving") {
-        return `Monitor and maintain recovery conditions. Current leading stressor remains ${lead}.`;
-      }
-      return `Continue monitoring. Watch ${lead} most closely.`;
-    }
-
-    function buildTrajectoryChips(trajectory) {
-      const container = document.getElementById("trajectoryOutput");
-      container.innerHTML = "";
-
-      trajectory.forEach((value, index) => {
-        const chip = document.createElement("div");
-        chip.className = "month-chip";
-        chip.innerHTML = `<strong>Month ${index + 1}</strong>${value}`;
-        container.appendChild(chip);
-      });
-    }
-
-    function renderDrivers(drivers) {
-      const el = document.getElementById("driversOutput");
-      el.innerHTML = "";
-      drivers.forEach(driver => {
-        const li = document.createElement("li");
-        li.textContent = `${driver.name} (${driver.value})`;
-        el.appendChild(li);
-      });
-    }
-
-async function fetchNOAATemperature() {
-  try {
-    const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-
-    const kelvin = data.table.rows[0][0];
-    const celsius = kelvin - 273.15;
-
-    return parseFloat(celsius.toFixed(2));
-
-  } catch (err) {
-    console.error("NOAA ERROR:", err);
-    return null;
-  }
-}
-
-  } catch (err) {
-    console.error("NOAA ERROR:", err);
-    alert("NOAA fetch failed");
-    return null;
-  }
-}
-
-  const data = await res.json();
-  console.log("DIRECT NOAA RAW:", data);
-
-  const kelvin = data.table.rows[0][0];
-  const celsius = kelvin - 273.15;
-
-  console.log("DIRECT NOAA TEMP:", celsius);
-
-  document.getElementById("temp").value = celsius.toFixed(2);
-
-  alert("NOAA TEMP: " + celsius.toFixed(2) + "°C");
-
-  return celsius;
-
-} catch (err) {
-  console.error("DIRECT NOAA ERROR:", err);
-  alert("DIRECT NOAA FAILED");
-  return null;
-}
-  }
-}
-    async function loadNOAATemp() {
-      const temp = await fetchNOAATemperature(NOAA_LAT, NOAA_LON);
-
-      if (temp === null) {
-        alert("NOAA temperature fetch failed.");
-        return;
-      }
-
-      document.getElementById("temp").value = temp;
-      document.getElementById("sourceTag").textContent = "NOAA Temperature Loaded";
-    }
-
-    async function runWithNOAA() {
-      const temp = await fetchNOAATemperature(NOAA_LAT, NOAA_LON);
-
-      if (temp === null) {
-        alert("NOAA fetch failed. Running manual values instead.");
-        runEngine("Manual Input");
-        return;
-      }
-
-      document.getElementById("temp").value = temp;
-      runEngine("NOAA Latest Available");
-    }
-
-    function runManual() {
-      runEngine("Manual Input");
-    }
-
-    function runEngine(sourceLabel) {
-      const temp = safeNumber("temp");
-      const omega = safeNumber("omega");
-      const nutrients = safeNumber("nutrients");
-      const sediment = safeNumber("sediment");
-      const light = safeNumber("light");
-      const time = parseInt(document.getElementById("time").value, 10);
-
-      if ([temp, omega, nutrients, sediment, light, time].some(v => Number.isNaN(v))) {
-        alert("One or more inputs are invalid.");
-        return;
-      }
-
-      const Tstress = convertTemperatureToStress(temp);
-      const omegaRecovery = omegaToRecovery(omega);
-      const lightRecovery = lightToRecovery(light);
-
-      let health = 100;
-      const trajectory = [];
-
-      for (let month = 0; month < time; month++) {
-        const stress = ((Tstress * 1.35) + nutrients + sediment) / 3.35;
-        const recovery = ((omegaRecovery * 1.05) + lightRecovery) / 2.05;
-        const net = recovery - stress;
-
-        health += net;
-        health = clamp(health, 0, 100);
-        trajectory.push(round(health, 2));
-      }
-
-      const trend = detectTrend(trajectory);
-      const momentum = detectMomentum(trajectory);
-      const status = classifyStatus(health, trend);
-      const risk = getForwardRisk(trajectory);
-      const topDrivers = rankDrivers(Tstress, nutrients, sediment, omega, light);
-      const decision = getDecision(status, trend, momentum, topDrivers);
-
-      const result = {
-        temperature_c: round(temp, 2),
-        temperature_stress: Tstress,
-        aragonite_saturation: round(omega, 2),
-        nutrients: round(nutrients, 2),
-        sediment: round(sediment, 2),
-        light: round(light, 2),
-        time_horizon_months: time,
-        final_health: round(health, 2),
-        status,
-        trend,
-        momentum,
-        forward_risk: risk,
-        top_drivers: topDrivers,
-        decision_recommendation: decision,
-        trajectory,
-        data_source: sourceLabel
-      };
-
-      document.getElementById("sourceTag").textContent = sourceLabel;
-      document.getElementById("healthTag").textContent = result.final_health;
-      document.getElementById("statusTag").textContent = result.status;
-      document.getElementById("statusTag").className = "v " + getStatusClass(result.status);
-      document.getElementById("riskTag").textContent = result.forward_risk;
-
-      document.getElementById("summaryOutput").textContent =
-`Health Score: ${result.final_health}
-Status: ${result.status}
-Trend: ${result.trend}
-Momentum: ${result.momentum}
-Forward Risk: ${result.forward_risk}
-Temperature Stress: ${result.temperature_stress}
-Data Source: ${result.data_source}`;
-
-      buildTrajectoryChips(result.trajectory);
-      renderDrivers(result.top_drivers);
-      document.getElementById("decisionOutput").textContent = result.decision_recommendation;
-      document.getElementById("jsonOutput").textContent = JSON.stringify(result, null, 2);
-    }
-
-    window.applyPreset = applyPreset;
-    window.resetForm = resetForm;
-    window.loadNOAATemp = loadNOAATemp;
-    window.runWithNOAA = runWithNOAA;
-    window.runManual = runManual;
-
-    resetForm();
-  </script>
-</body>
-</html>
 
