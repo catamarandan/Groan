@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -536,46 +537,24 @@
       });
     }
 
-async function fetchNOAATemperature() {
-  try {
-    const raw = await GROAN.data.sst.sstFetch();
-    const normalized = GROAN.data.sst.sstNormalize(raw);
+    async function fetchNOAATemperature() {
+      try {
+        if (!window.GROAN || !GROAN.data || !GROAN.data.sst || typeof GROAN.data.sst.sstFetch !== "function" || typeof GROAN.data.sst.sstNormalize !== "function") {
+          throw new Error("sst-ingestion.js is not loaded or GROAN.data.sst is unavailable.");
+        }
 
-    document.getElementById("temp").value = normalized;
-    GROAN_INPUT.temperature = normalized;
+        const raw = await GROAN.data.sst.sstFetch(NOAA_LAT, NOAA_LON);
+        const normalized = GROAN.data.sst.sstNormalize(raw);
 
-    return normalized;
-
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
-}
-
-    const raw = await GROAN.data.sst.sstFetch();
-    const normalized = GROAN.data.sst.sstNormalize(raw);
-    GROAN.data.sst.sstInject(normalized);
-
-    document.getElementById("temperature").value = GROAN_INPUT.temperature;
-
-    alert("NOAA SST Loaded: " + GROAN_INPUT.temperature);
-
-  } catch (err) {
-    console.error(err);
-    alert("NOAA link failed");
-  }
-}
-
-        const tempK = data.table.rows[0][0];
-        return round(tempK - 273.15, 2);
-      } catch (error) {
-        console.error("NOAA ERROR:", error);
+        return round(normalized, 2);
+      } catch (err) {
+        console.error("NOAA ERROR:", err);
         return null;
       }
     }
 
     async function loadNOAATemp() {
-      const temp = await fetchNOAATemperature(NOAA_LAT, NOAA_LON);
+      const temp = await fetchNOAATemperature();
 
       if (temp === null) {
         alert("NOAA temperature fetch failed.");
@@ -587,7 +566,7 @@ async function fetchNOAATemperature() {
     }
 
     async function runWithNOAA() {
-      const temp = await fetchNOAATemperature(NOAA_LAT, NOAA_LON);
+      const temp = await fetchNOAATemperature();
 
       if (temp === null) {
         alert("NOAA fetch failed. Running manual values instead.");
