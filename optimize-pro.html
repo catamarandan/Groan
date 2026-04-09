@@ -536,21 +536,19 @@
       });
     }
 
-async function fetchNOAATemperature() {
+async function fetchNOAATemperature(lat, lon) {
   try {
-    
-
-    const raw = await GROAN.data.sst.sstFetch();
+    const raw = await GROAN.data.sst.sstFetch(lat, lon);
     const normalized = GROAN.data.sst.sstNormalize(raw);
-    GROAN.data.sst.sstInject(normalized);
 
-    document.getElementById("temperature").value = GROAN_INPUT.temperature;
+    document.getElementById("temp").value = normalized;
+    GROAN_INPUT.temperature = normalized;
 
-    alert("NOAA SST Loaded: " + GROAN_INPUT.temperature);
+    return normalized;
 
   } catch (err) {
     console.error(err);
-    alert("NOAA link failed");
+    return null;
   }
 }
     async function loadNOAATemp() {
