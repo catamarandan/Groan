@@ -536,15 +536,28 @@
       });
     }
 
-async function fetchNOAATemperature()
- try {
- const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
+async function fetchNOAATemperature() {
+  try {
+    const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
 
-  const res = await fetch(url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const kelvin = data.table.rows[0][0];
+    const celsius = kelvin - 273.15;
+
+    document.getElementById("temp").value = celsius.toFixed(2);
+
+    return celsius;
+
+  } catch (err) {
+    console.error("NOAA ERROR:", err);
+    alert("NOAA fetch failed");
+    return null;
   }
+}
 
   const data = await res.json();
   console.log("DIRECT NOAA RAW:", data);
