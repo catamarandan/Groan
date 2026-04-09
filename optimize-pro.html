@@ -380,6 +380,9 @@ const NOAA_LAT = 9.35;
 const NOAA_LON = -82.25;
 
 const NOAA_LABEL = "NOAA SST";
+    function round(val, dec = 2) {
+  return Number(Math.round(val + "e" + dec) + "e-" + dec);
+}
 
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
