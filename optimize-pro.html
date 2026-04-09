@@ -536,19 +536,13 @@
       });
     }
 
-    async function fetchNOAATemperature() {
+async function fetchNOAATemperature() {
   try {
-
-    if (!window.GROAN || !GROAN.data || !GROAN.data.sst) {
-      throw new Error("SST module not loaded");
-    }
-
-    const raw = await GROAN.data.sst.sstFetch(NOAA_LAT, NOAA_LON);
+    const raw = await GROAN.data.sst.sstFetch();
     const normalized = GROAN.data.sst.sstNormalize(raw);
 
-    GROAN.data.sst.sstInject(normalized);
-
     document.getElementById("temp").value = normalized;
+    GROAN_INPUT.temperature = normalized;
 
     return normalized;
 
