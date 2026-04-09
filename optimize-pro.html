@@ -548,9 +548,13 @@ async function fetchNOAATemperature() {
     const kelvin = data.table.rows[0][0];
     const celsius = kelvin - 273.15;
 
-    document.getElementById("temp").value = celsius.toFixed(2);
+    return parseFloat(celsius.toFixed(2));
 
-    return celsius;
+  } catch (err) {
+    console.error("NOAA ERROR:", err);
+    return null;
+  }
+}
 
   } catch (err) {
     console.error("NOAA ERROR:", err);
