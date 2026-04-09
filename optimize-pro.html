@@ -553,15 +553,6 @@ async function fetchNOAATemperature() {
     alert("NOAA link failed");
   }
 }
-
-        const tempK = data.table.rows[0][0];
-        return round(tempK - 273.15, 2);
-      } catch (error) {
-        console.error("NOAA ERROR:", error);
-        return null;
-      }
-    }
-
     async function loadNOAATemp() {
       const temp = await fetchNOAATemperature(NOAA_LAT, NOAA_LON);
 
