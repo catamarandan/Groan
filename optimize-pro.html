@@ -5,7 +5,7 @@
   <title>GROAN™ Optimization Pro</title>
   <script src="sst-ingestion.js?v=3"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
   <style>
     :root {
       --bg: #f4f7fb;
@@ -199,6 +199,7 @@
       color: #17324f;
     }
 
+    
     .trajectory-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -374,18 +375,16 @@
   </div>
 
   <script>
-const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
-const NOAA_DATASET = "jplMURSST41";
-const NOAA_LAT = 9.35;
-const NOAA_LON = -82.25;
+    const NOAA_BASE_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
+    const NOAA_DATASET = "jplMURSST41";
+    const NOAA_LAT = 9.35;
+    const NOAA_LON = -82.25;
+    const NOAA_LABEL = "NOAA SST";
 
-const NOAA_LABEL = "NOAA SST";
     function round(val, dec = 2) {
-  return Number(Math.round(val + "e" + dec) + "e-" + dec);
-}
-function round(val, dec = 2) {
-  return Number(Math.round(val + "e" + dec) + "e-" + dec);
-}
+      return Number(Math.round(val + "e" + dec) + "e-" + dec);
+    }
+
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
     }
@@ -396,15 +395,14 @@ function round(val, dec = 2) {
 
     function applyPreset() {
       const preset = document.getElementById("preset").value;
-
       const presets = {
         custom:   { temp: 28.0, omega: 3.5, nutrients: 3.0, sediment: 2.0, light: 8.0, time: 12 },
         healthy:  { temp: 27.0, omega: 3.9, nutrients: 2.0, sediment: 1.5, light: 9.0, time: 12 },
         watch:    { temp: 29.0, omega: 3.2, nutrients: 4.5, sediment: 3.5, light: 7.0, time: 12 },
+
         warning:  { temp: 30.0, omega: 2.8, nutrients: 6.0, sediment: 5.0, light: 6.0, time: 12 },
         critical: { temp: 31.0, omega: 2.4, nutrients: 8.0, sediment: 7.0, light: 4.0, time: 12 }
       };
-
       const p = presets[preset];
       document.getElementById("temp").value = p.temp;
       document.getElementById("omega").value = p.omega;
@@ -417,172 +415,45 @@ function round(val, dec = 2) {
     function resetForm() {
       document.getElementById("preset").value = "custom";
       applyPreset();
-
       document.getElementById("sourceTag").textContent = "Manual Input";
       document.getElementById("healthTag").textContent = "—";
       document.getElementById("statusTag").textContent = "—";
-      document.getElementById("statusTag").className = "v";
       document.getElementById("riskTag").textContent = "—";
-      document.getElementById("summaryOutput").textContent = "Run GROAN to generate output.";
-      document.getElementById("trajectoryOutput").innerHTML = "";
-      document.getElementById("driversOutput").innerHTML = "";
-      document.getElementById("decisionOutput").textContent = "Awaiting run.";
-      document.getElementById("jsonOutput").textContent = "Awaiting run.";
     }
 
-    function convertTemperatureToStress(tempC) {
-      if (tempC < 26) return 2;
-      if (tempC < 28) return 4;
-      if (tempC < 30) return 6;
-      if (tempC < 31) return 8;
-      return 10;
-    }
-
-    function omegaToRecovery(omega) {
-      return clamp((omega / 4.5) * 10, 0, 10);
-    }
-
-    function lightToRecovery(light) {
-      return clamp(light, 0, 10);
-    }
-
-    function detectTrend(arr) {
-      if (arr.length < 2) return "Stable";
-      const delta = arr[arr.length - 1] - arr[0];
-      if (delta > 1) return "Improving";
-      if (delta < -1) return "Degrading";
-      return "Stable";
-    }
-
-    function detectMomentum(arr) {
-      if (arr.length < 2) return "Weak";
-      const delta = arr[arr.length - 1] - arr[arr.length - 2];
-      const mag = Math.abs(delta);
-      if (mag < 0.5) return "Weak";
-      if (mag < 1.5) return "Moderate";
-      return "Strong";
-    }
-
-function classifyStatus(health, trend) {
-  if (health >= 75) return "Stable";
-  if (health >= 55) return "Watch";
-  if (health >= 35) return "Warning";
-  return "Critical";
-}
-
-    function getStatusClass(status) {
-      if (status === "Stable") return "good";
-      if (status === "Watch") return "watch";
-      if (status === "Warning") return "warn";
-      return "bad";
-    }
-
-    function getForwardRisk(trajectory) {
-      for (let i = 0; i < trajectory.length; i++) {
-        if (trajectory[i] <= 35) return `Critical in ${i + 1} mo`;
-        if (trajectory[i] <= 55) return `Warning in ${i + 1} mo`;
-      }
-      return "No breach in horizon";
-    }
-
-    function rankDrivers(Tstress, nutrients, sediment, omega, light) {
-      const drivers = [
-        { name: "Temperature", value: Tstress },
-        { name: "Nutrients", value: nutrients },
-        { name: "Sediment", value: sediment },
-        { name: "Low Aragonite", value: round(clamp(10 - omegaToRecovery(omega), 0, 10), 2) },
-        { name: "Low Light", value: round(clamp(10 - lightToRecovery(light), 0, 10), 2) }
-      ];
-
-      drivers.sort((a, b) => b.value - a.value);
-      return drivers.slice(0, 3);
-    }
-
-    function getDecision(status, trend, momentum, topDrivers) {
-      const lead = topDrivers[0] ? topDrivers[0].name : "primary stressor";
-
-      if (status === "Critical") {
-        return `Immediate intervention required. Primary focus: ${lead}.`;
-      }
-      if (status === "Warning" && trend === "Degrading") {
-        return `Urgent action recommended. The system is degrading with ${momentum.toLowerCase()} momentum. Priority driver: ${lead}.`;
-      }
-      if (status === "Watch" && trend === "Degrading") {
-        return `Preemptive action recommended. Trajectory is degrading. Priority driver: ${lead}.`;
-      }
-      if (trend === "Improving") {
-        return `Monitor and maintain recovery conditions. Current leading stressor remains ${lead}.`;
-      }
-      return `Continue monitoring. Watch ${lead} most closely.`;
-    }
-
-    function buildTrajectoryChips(trajectory) {
-      const container = document.getElementById("trajectoryOutput");
-      container.innerHTML = "";
-
-      trajectory.forEach((value, index) => {
-        const chip = document.createElement("div");
-        chip.className = "month-chip";
-        chip.innerHTML = `<strong>Month ${index + 1}</strong>${value}`;
-        container.appendChild(chip);
-      });
-    }
-
-    function renderDrivers(drivers) {
-      const el = document.getElementById("driversOutput");
-      el.innerHTML = "";
-      drivers.forEach(driver => {
-        const li = document.createElement("li");
-        li.textContent = `${driver.name} (${driver.value})`;
-        el.appendChild(li);
-      });
-    }
-
- async function loadNOAATemp() {
-  const temp = await fetchNOAATemperature();
-
-  if (temp === null) {
-    alert("NOAA temperature fetch failed.");
-    return;
-  }
-
-  document.getElementById("temp").value = temp;
-  runEngine(NOAA_LABEL);
-}
-
+    async function fetchNOAATemperature() {
+      try {
+        if (!window.GROAN || !GROAN.data?.sst) {
+          throw new Error("SST module not loaded");
+        }
         const raw = await GROAN.data.sst.sstFetch(NOAA_LAT, NOAA_LON);
         const normalized = GROAN.data.sst.sstNormalize(raw);
-
-        return round(normalized, 2);
+        if (!normalized || normalized <= 0) {
+          throw new Error("Invalid SST value");
+        }
+        const tempC = normalized > 100 ? normalized - 273.15 : normalized;
+        return round(tempC, 2);
       } catch (err) {
-        console.error("NOAA ERROR:", err);
+        console.error(err);
         return null;
       }
     }
 
     async function loadNOAATemp() {
       const temp = await fetchNOAATemperature();
-
-      if (temp === null) {
-        alert("NOAA temperature fetch failed.");
-        return;
-      }
-
+      if (temp === null) return;
       document.getElementById("temp").value = temp;
-      document.getElementById("sourceTag").textContent = "NOAA Temperature Loaded";
+      runEngine(NOAA_LABEL);
     }
 
     async function runWithNOAA() {
       const temp = await fetchNOAATemperature();
-
       if (temp === null) {
-        alert("NOAA fetch failed. Running manual values instead.");
         runEngine("Manual Input");
         return;
       }
-
       document.getElementById("temp").value = temp;
-      runEngine("NOAA Latest Available");
+      runEngine(NOAA_LABEL);
     }
 
     function runManual() {
@@ -591,88 +462,16 @@ function classifyStatus(health, trend) {
 
     function runEngine(sourceLabel) {
       const temp = safeNumber("temp");
-      const omega = safeNumber("omega");
-      const nutrients = safeNumber("nutrients");
-      const sediment = safeNumber("sediment");
-      const light = safeNumber("light");
-      const time = parseInt(document.getElementById("time").value, 10);
-
-      if ([temp, omega, nutrients, sediment, light, time].some(v => Number.isNaN(v))) {
-        alert("One or more inputs are invalid.");
-        return;
-      }
-
-      const Tstress = convertTemperatureToStress(temp);
-      const omegaRecovery = omegaToRecovery(omega);
-      const lightRecovery = lightToRecovery(light);
-
-      let health = 100;
-      const trajectory = [];
-
-      for (let month = 0; month < time; month++) {
-        const stress = ((Tstress * 1.35) + nutrients + sediment) / 3.35;
-        const recovery = ((omegaRecovery * 1.05) + lightRecovery) / 2.05;
-        const net = recovery - stress;
-
-        health += net;
-        health = clamp(health, 0, 100);
-        trajectory.push(round(health, 2));
-      }
-
-      const trend = detectTrend(trajectory);
-      const momentum = detectMomentum(trajectory);
-      const status = classifyStatus(health, trend);
-      const risk = getForwardRisk(trajectory);
-      const topDrivers = rankDrivers(Tstress, nutrients, sediment, omega, light);
-      const decision = getDecision(status, trend, momentum, topDrivers);
-
-      const result = {
-        temperature_c: round(temp, 2),
-        temperature_stress: Tstress,
-        aragonite_saturation: round(omega, 2),
-        nutrients: round(nutrients, 2),
-        sediment: round(sediment, 2),
-        light: round(light, 2),
-        time_horizon_months: time,
-        final_health: round(health, 2),
-        status,
-        trend,
-        momentum,
-        forward_risk: risk,
-        top_drivers: topDrivers,
-        decision_recommendation: decision,
-        trajectory,
-        data_source: sourceLabel
-      };
-
       document.getElementById("sourceTag").textContent = sourceLabel;
-      document.getElementById("healthTag").textContent = result.final_health;
-      document.getElementById("statusTag").textContent = result.status;
-      document.getElementById("statusTag").className = "v " + getStatusClass(result.status);
-      document.getElementById("riskTag").textContent = result.forward_risk;
-
-      document.getElementById("summaryOutput").textContent =
-`Health Score: ${result.final_health}
-Status: ${result.status}
-Trend: ${result.trend}
-Momentum: ${result.momentum}
-Forward Risk: ${result.forward_risk}
-Temperature Stress: ${result.temperature_stress}
-Data Source: ${result.data_source}`;
-
-      buildTrajectoryChips(result.trajectory);
-      renderDrivers(result.top_drivers);
-      document.getElementById("decisionOutput").textContent = result.decision_recommendation;
-      document.getElementById("jsonOutput").textContent = JSON.stringify(result, null, 2);
+      document.getElementById("healthTag").textContent = temp;
     }
 
-    window.applyPreset = applyPreset;
-    window.resetForm = resetForm;
-    window.loadNOAATemp = loadNOAATemp;
-    window.runWithNOAA = runWithNOAA;
     window.runManual = runManual;
+    window.runWithNOAA = runWithNOAA;
+    window.loadNOAATemp = loadNOAATemp;
 
     resetForm();
   </script>
 </body>
 </html>
+
