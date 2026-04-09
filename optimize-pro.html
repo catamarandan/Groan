@@ -462,12 +462,12 @@
       return "Strong";
     }
 
-    function classifyStatus(health, trend) {
-      if (health >= 75 && trend === "Improving") return "Stable";
-      if (health >= 55) return "Watch";
-      if (health >= 35) return "Warning";
-      return "Critical";
-    }
+function classifyStatus(health, trend) {
+  if (health >= 75) return "Stable";
+  if (health >= 55) return "Watch";
+  if (health >= 35) return "Warning";
+  return "Critical";
+}
 
     function getStatusClass(status) {
       if (status === "Stable") return "good";
