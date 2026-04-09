@@ -536,9 +536,9 @@
       });
     }
 
-async function fetchNOAATemperature(lat, lon) {
+async function fetchNOAATemperature()
  try {
-  const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
+ const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
 
   const res = await fetch(url);
 
