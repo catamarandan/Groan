@@ -537,19 +537,34 @@
     }
 
 async function fetchNOAATemperature(lat, lon) {
-  try {
-    const raw = await GROAN.data.sst.sstFetch(NOAA_LAT, NOAA_LON);
-    console.log("NOAA RAW:", raw);
-    const normalized = GROAN.data.sst.sstNormalize(raw.sst);
-    console.log("NOAA TEMP (C):", normalized);
+ try {
+  const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
 
-   document.getElementById("temp").value = raw.sst;
-    alert("NOAA TEMP: " + normalized + "°C");
-    return normalized;
+  const res = await fetch(url);
 
-  } catch (err) {
-    console.error(err);
-    return null;
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  console.log("DIRECT NOAA RAW:", data);
+
+  const kelvin = data.table.rows[0][0];
+  const celsius = kelvin - 273.15;
+
+  console.log("DIRECT NOAA TEMP:", celsius);
+
+  document.getElementById("temp").value = celsius.toFixed(2);
+
+  alert("NOAA TEMP: " + celsius.toFixed(2) + "°C");
+
+  return celsius;
+
+} catch (err) {
+  console.error("DIRECT NOAA ERROR:", err);
+  alert("DIRECT NOAA FAILED");
+  return null;
+}
   }
 }
     async function loadNOAATemp() {
