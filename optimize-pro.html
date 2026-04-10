@@ -121,7 +121,7 @@
       document.getElementById('light').value = vals.l;
     }
 
-async function fetchNOAA(btn){
+async function fetchNOAA(btn) {
 
   const original = btn.innerText;
   btn.innerText = "Loading...";
@@ -132,45 +132,28 @@ async function fetchNOAA(btn){
 
     const res = await fetch(url);
 
-    if(!res.ok) throw new Error("API failed");
+    if (!res.ok) throw new Error("API failed");
 
     const data = await res.json();
 
-    const temps = data.hourly.sea_surface_temperature;
+    if (!data?.hourly?.sea_surface_temperature?.length) {
+      throw new Error("Bad data");
+    }
 
+    const temps = data.hourly.sea_surface_temperature;
     const latest = temps[temps.length - 1];
 
     document.getElementById('temp').value = latest.toFixed(2);
 
-    runEngine("Live SST (Open-Meteo)");
+    runEngine("Live SST");
 
   } catch (e) {
     console.error(e);
-    alert("Live SST failed — fallback used");
+    alert("Live data failed — fallback used");
     runEngine("Manual Fallback");
   }
 
   btn.innerText = original;
-}
-
-    if (!data) {
-      throw new Error("All NOAA fetch attempts failed");
-    }
-
-    const kelvin = data.table.rows[0][0];
-    const tempC = kelvin - 273.15;
-
-    document.getElementById('temp').value = tempC.toFixed(2);
-
-    runEngine('NOAA Satellite');
-
-  } catch (e) {
-    console.error("NOAA ERROR:", e);
-    alert("NOAA Fetch Failed — using manual fallback.");
-    runEngine('Manual (Fallback)');
-  } finally {
-    btn.innerText = "Run NOAA";
-  }
 }
 
     function resetForm() {
