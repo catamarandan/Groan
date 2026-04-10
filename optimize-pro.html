@@ -121,22 +121,41 @@
       document.getElementById('light').value = vals.l;
     }
 
-    async function fetchNOAA() {
-      const btn = event.target;
-      btn.innerText = "Loading...";
-      try {
-        const url = "https://cors-anywhere.herokuapp.com/https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
-        const data = await res.json();
-        const tempC = data.table.rows[0][0] - 273.15;
-        document.getElementById('temp').value = tempC.toFixed(2);
-        runEngine('NOAA Satellite');
-      } catch (e) {
-        alert("NOAA Fetch Failed (likely CORS). Using manual values.");
-        runEngine('Manual (Fallback)');
-      } finally {
-        btn.innerText = "Run NOAA";
-      }
+async function fetchNOAA() {
+  const btn = event.target;
+  btn.innerText = "Loading...";
+
+  try {
+    const url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error("NOAA response not OK");
     }
+
+    const data = await res.json();
+
+    // Validate structure safely
+    if (!data || !data.table || !data.table.rows || !data.table.rows.length) {
+      throw new Error("Invalid NOAA data format");
+    }
+
+    const kelvin = data.table.rows[0][0];
+    const tempC = kelvin - 273.15;
+
+    document.getElementById('temp').value = tempC.toFixed(2);
+
+    runEngine('NOAA Satellite');
+
+  } catch (e) {
+    console.error("NOAA ERROR:", e);
+    alert("NOAA Fetch Failed — check console.");
+    runEngine('Manual (Fallback)');
+  } finally {
+    btn.innerText = "Run NOAA";
+  }
+}
 
     function resetForm() {
       document.getElementById('preset').value = 'custom';
