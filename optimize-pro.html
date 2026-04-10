@@ -172,29 +172,6 @@ async function fetchNOAA() {
   }
 }
 
-    const data = await res.json();
-
-    // Validate structure safely
-    if (!data || !data.table || !data.table.rows || !data.table.rows.length) {
-      throw new Error("Invalid NOAA data format");
-    }
-
-    const kelvin = data.table.rows[0][0];
-    const tempC = kelvin - 273.15;
-
-    document.getElementById('temp').value = tempC.toFixed(2);
-
-    runEngine('NOAA Satellite');
-
-  } catch (e) {
-    console.error("NOAA ERROR:", e);
-    alert("NOAA Fetch Failed — check console.");
-    runEngine('Manual (Fallback)');
-  } finally {
-    btn.innerText = "Run NOAA";
-  }
-}
-
     function resetForm() {
       document.getElementById('preset').value = 'custom';
       applyPreset();
