@@ -121,36 +121,37 @@
       document.getElementById('light').value = vals.l;
     }
 
-async function fetchNOAA() {
-  const btn = event.target;
+async function fetchNOAA(btn){
+
+  const original = btn.innerText;
   btn.innerText = "Loading...";
 
-  const baseURL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.json?analysed_sst[(last)][(9.35)][(-82.25)]";
-
-  const urls = [
-    baseURL,
-    "https://api.allorigins.win/raw?url=" + encodeURIComponent(baseURL),
-    "https://corsproxy.io/?" + encodeURIComponent(baseURL)
-  ];
-
   try {
-    let data = null;
 
-    for (let url of urls) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
+    const url = "https://marine-api.open-meteo.com/v1/marine?latitude=9.35&longitude=-82.25&hourly=sea_surface_temperature";
 
-        const json = await res.json();
+    const res = await fetch(url);
 
-        if (json?.table?.rows?.length) {
-          data = json;
-          break;
-        }
-      } catch (err) {
-        continue;
-      }
-    }
+    if(!res.ok) throw new Error("API failed");
+
+    const data = await res.json();
+
+    const temps = data.hourly.sea_surface_temperature;
+
+    const latest = temps[temps.length - 1];
+
+    document.getElementById('temp').value = latest.toFixed(2);
+
+    runEngine("Live SST (Open-Meteo)");
+
+  } catch (e) {
+    console.error(e);
+    alert("Live SST failed — fallback used");
+    runEngine("Manual Fallback");
+  }
+
+  btn.innerText = original;
+}
 
     if (!data) {
       throw new Error("All NOAA fetch attempts failed");
