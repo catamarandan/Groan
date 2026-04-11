@@ -43,172 +43,542 @@
     .trajectory-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .month-chip { background: #eef5fc; border: 1px solid #d8e4f0; border-radius: 8px; padding: 8px; text-align: center; min-width: 85px; }
     .month-chip b { display: block; font-size: 0.7rem; color: var(--muted); }
+    .sst-section { border-top: 2px solid #d7deea; margin-top: 14px; padding-top: 14px; }
+    .sst-section h3 { margin: 0 0 10px 0; color: var(--accent); font-size: 1rem; }
+    .grid-coords { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sst-viz { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .sst-grid-table { border-collapse: separate; border-spacing: 4px; }
+    .sst-grid-table td {
+      width: 72px; height: 68px; text-align: center; vertical-align: middle;
+      border-radius: 10px; font-size: 0.8rem; font-weight: 700;
+      transition: all 0.3s;
+    }
+    .sst-grid-table td span { display: block; font-size: 0.62rem; font-weight: 400; opacity: 0.8; margin-top: 3px; }
+    .sst-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+    .sst-stat { background: #f1f6fc; border: 1px solid #d5e3f0; border-radius: 10px; padding: 10px; text-align: center; }
+    .sst-stat .sk { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+    .sst-stat .sv { font-size: 1rem; font-weight: 700; }
+    .anomaly-hot { color: #b42318; }
+    .anomaly-cool { color: #1d7a46; }
+    .anomaly-norm { color: var(--muted); }
+    .smoothed-bar { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 6px; }
+    .s-chip { background: #e0eef8; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; }
+
+    /* Task 5 — Visualization Layer */
+    #trajCanvas { width: 100%; height: 220px; border-radius: 10px; display: block; }
+    .anomaly-gauge-wrap { margin-top: 10px; }
+    .anomaly-gauge-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .anomaly-gauge-track { height: 18px; border-radius: 9px; background: linear-gradient(to right, #1565c0, #e3f2fd 45%, #fff8e1 55%, #b71c1c); position: relative; overflow: visible; }
+    .anomaly-gauge-needle { position: absolute; top: -4px; width: 4px; height: 26px; background: #16324f; border-radius: 2px; transform: translateX(-50%); transition: left 0.5s ease; }
+    .anomaly-gauge-val { text-align: center; font-weight: 700; font-size: 0.85rem; margin-top: 4px; }
+
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .statusbar { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="hero">
-      <h1>GROAN™ Optimization Pro</h1>
-      <p>Dynamic reef health trajectory and decision support.</p>
-    </section>
+<div class="wrap">
+  <section class="hero">
+    <h1>GROAN™ Optimization Pro</h1>
+    <p>Dynamic reef health trajectory and decision support — Task 5: Visualization Layer.</p>
+  </section>
 
-    <div class="grid">
-      <section class="panel">
-        <h2>Inputs</h2>
-        <div class="form-grid">
+  <div class="grid">
+    <!-- LEFT PANEL -->
+    <section class="panel">
+      <h2>Inputs</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>Preset</label>
+          <select id="preset" onchange="applyPreset()">
+            <option value="custom">Custom</option>
+            <option value="healthy">Healthy</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="field"><label>Temp (°C)</label><input id="temp" type="number" step="0.1" value="28"></div>
+        <div class="field"><label>Aragonite (Ω)</label><input id="omega" type="number" step="0.1" value="3.5"></div>
+        <div class="field"><label>Nutrients (0-10)</label><input id="nutrients" type="number" step="0.1" value="3"></div>
+        <div class="field"><label>Sediment (0-10)</label><input id="sediment" type="number" step="0.1" value="2"></div>
+        <div class="field"><label>Light (0-10)</label><input id="light" type="number" step="0.1" value="8"></div>
+        <div class="field"><label>Horizon (Months)</label><input id="time" type="number" value="12" max="60"></div>
+      </div>
+
+      <div class="sst-section">
+        <h3>🌊 SST Grid Sampling</h3>
+        <div class="grid-coords">
+          <div class="field"><label>Center Lat</label><input id="centerLat" type="number" step="0.01" value="9.35"></div>
+          <div class="field"><label>Center Lon</label><input id="centerLon" type="number" step="0.01" value="-82.25"></div>
+        </div>
+        <div class="grid-row">
           <div class="field">
-            <label>Preset</label>
-            <select id="preset" onchange="applyPreset()">
-              <option value="custom">Custom</option>
-              <option value="healthy">Healthy</option>
-              <option value="critical">Critical</option>
+            <label>Radius (°)</label>
+            <select id="gridRadius">
+              <option value="0.25">0.25° ~28km</option>
+              <option value="0.5" selected>0.5° ~55km</option>
+              <option value="1.0">1.0° ~111km</option>
             </select>
           </div>
-          <div class="field"><label>Temp (°C)</label><input id="temp" type="number" step="0.1" value="28"></div>
-          <div class="field"><label>Aragonite (Ω)</label><input id="omega" type="number" step="0.1" value="3.5"></div>
-          <div class="field"><label>Nutrients (0-10)</label><input id="nutrients" type="number" step="0.1" value="3"></div>
-          <div class="field"><label>Sediment (0-10)</label><input id="sediment" type="number" step="0.1" value="2"></div>
-          <div class="field"><label>Light (0-10)</label><input id="light" type="number" step="0.1" value="8"></div>
-          <div class="field"><label>Horizon (Months)</label><input id="time" type="number" value="12" max="60"></div>
+          <div class="field">
+            <label>Grid Size</label>
+            <select id="gridSize">
+              <option value="3" selected>3×3 (9 pts)</option>
+              <option value="5">5×5 (25 pts)</option>
+            </select>
+          </div>
         </div>
-        <div class="btn-row">
-          <button class="btn-primary" onclick="runEngine('Manual')">Run Manual</button>
-          <button class="btn-secondary" onclick="fetchNOAA(this)()">Run NOAA</button>
-          <button class="btn-danger" onclick="resetForm()">Reset</button>
-        </div>
-      </section>
+      </div>
 
-      <section class="panel">
-        <div class="statusbar">
-          <div class="mini"><div class="k">Source</div><div id="sourceTag" class="v">Manual</div></div>
-          <div class="mini"><div class="k">Health</div><div id="healthTag" class="v">—</div></div>
-          <div class="mini"><div class="k">Status</div><div id="statusTag" class="v">—</div></div>
-          <div class="mini"><div class="k">Risk</div><div id="riskTag" class="v">—</div></div>
-        </div>
+      <div class="btn-row">
+        <button class="btn-primary"   onclick="runEngine('Manual')">Run Manual</button>
+        <button class="btn-secondary" onclick="fetchNOAA(this)">Run NOAA</button>
+        <button class="btn-secondary" onclick="runSSTGrid(this)">Run SST Grid</button>
+        <button class="btn-danger"    onclick="resetForm()">Reset</button>
+      </div>
+    </section>
 
-        <div class="box">
-          <h3>Trajectory</h3>
-          <div id="trajectoryOutput" class="trajectory-list"></div>
-        </div>
+    <!-- RIGHT PANEL -->
+    <section class="panel">
+      <div class="statusbar">
+        <div class="mini"><div class="k">Source</div><div id="sourceTag" class="v">Manual</div></div>
+        <div class="mini"><div class="k">Health</div><div id="healthTag" class="v">—</div></div>
+        <div class="mini"><div class="k">Status</div><div id="statusTag" class="v">—</div></div>
+        <div class="mini"><div class="k">Risk</div><div id="riskTag" class="v">—</div></div>
+      </div>
 
-        <div class="box">
-          <h3>Recommendation</h3>
-          <pre id="decisionOutput">Awaiting run...</pre>
+      <div class="box" id="sstGridBox" style="display:none;">
+        <h3>SST Grid Map</h3>
+        <div class="sst-viz">
+          <table class="sst-grid-table" id="sstGridTable"></table>
+          <div class="sst-stats">
+            <div class="sst-stat"><div class="sk">Spatial Avg</div><div class="sv" id="sstAvg">—</div></div>
+            <div class="sst-stat"><div class="sk">Anomaly Δ</div><div class="sv" id="sstAnomaly">—</div></div>
+            <div class="sst-stat"><div class="sk">24hr Smooth</div><div class="sv" id="sstSmoothed">—</div></div>
+          </div>
+          <div style="width:100%">
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Temporal Smoothing — last 24 hourly readings (°C)</div>
+            <div class="smoothed-bar" id="smoothedBar"></div>
+          </div>
+          <div style="width:100%" class="anomaly-gauge-wrap" id="anomalyGaugeWrap" style="display:none;">
+            <div class="anomaly-gauge-label"><span>Cool anomaly</span><span>Baseline</span><span>Heat anomaly</span></div>
+            <div class="anomaly-gauge-track">
+              <div class="anomaly-gauge-needle" id="anomalyNeedle" style="left:50%;"></div>
+            </div>
+            <div class="anomaly-gauge-val" id="anomalyGaugeVal">—</div>
+          </div>
         </div>
+      </div>
 
-        <div class="box">
-          <h3>Raw Data</h3>
-          <pre id="jsonOutput">{}</pre>
-        </div>
-      </section>
-    </div>
+      <div class="box">
+        <h3>Reef Health Trajectory</h3>
+        <canvas id="trajCanvas"></canvas>
+        <div id="trajectoryOutput" class="trajectory-list" style="display:none;"></div>
+      </div>
+
+      <div class="box">
+        <h3>Recommendation</h3>
+        <pre id="decisionOutput">Awaiting run...</pre>
+      </div>
+
+      <div class="box">
+        <h3>Raw Data</h3>
+        <pre id="jsonOutput">{}</pre>
+      </div>
+    </section>
   </div>
+</div>
 
-  <script>
-    function applyPreset() {
-      const p = document.getElementById('preset').value;
-      const vals = {
-        healthy: {t:26, o:4.0, n:1, s:1, l:9},
-        critical: {t:32, o:2.2, n:8, s:7, l:3},
-        custom: {t:28, o:3.5, n:3, s:2, l:8}
-      }[p];
-      if(!vals) return;
-      document.getElementById('temp').value = vals.t;
-      document.getElementById('omega').value = vals.o;
-      document.getElementById('nutrients').value = vals.n;
-      document.getElementById('sediment').value = vals.s;
-      document.getElementById('light').value = vals.l;
-    }
+<script>
 
-async function fetchNOAA(btn) {
-
-  const original = btn.innerText;
-  btn.innerText = "Loading...";
-
-  try {
-
-    const url = "https://marine-api.open-meteo.com/v1/marine?latitude=9.35&longitude=-82.25&hourly=sea_surface_temperature";
-
-    const res = await fetch(url);
-
-    if (!res.ok) throw new Error("API failed");
-
-    const data = await res.json();
-
-    if (!data?.hourly?.sea_surface_temperature?.length) {
-      throw new Error("Bad data");
-    }
-
-    const temps = data.hourly.sea_surface_temperature;
-    const latest = temps[temps.length - 1];
-
-    document.getElementById('temp').value = latest.toFixed(2);
-
-    runEngine("Live SST");
-
-  } catch (e) {
-    console.error(e);
-    alert("Live data failed — fallback used");
-    runEngine("Manual Fallback");
+  // ── PRESETS ──────────────────────────────────────────────────────────────────
+  function applyPreset() {
+    const p = document.getElementById('preset').value;
+    const vals = {
+      healthy: {t:26, o:4.0, n:1, s:1, l:9},
+      critical: {t:32, o:2.2, n:8, s:7, l:3},
+      custom:   {t:28, o:3.5, n:3, s:2, l:8}
+    }[p];
+    if (!vals) return;
+    document.getElementById('temp').value      = vals.t;
+    document.getElementById('omega').value     = vals.o;
+    document.getElementById('nutrients').value = vals.n;
+    document.getElementById('sediment').value  = vals.s;
+    document.getElementById('light').value     = vals.l;
   }
 
-  btn.innerText = original;
-}
-
-    function resetForm() {
-      document.getElementById('preset').value = 'custom';
-      applyPreset();
-      document.getElementById('healthTag').innerText = '—';
-      document.getElementById('statusTag').innerText = '—';
-      document.getElementById('riskTag').innerText = '—';
-      document.getElementById('trajectoryOutput').innerHTML = '';
-      document.getElementById('decisionOutput').innerText = 'Awaiting run...';
-      document.getElementById('jsonOutput').innerText = '{}';
+  // ── SINGLE-POINT NOAA (Task 3) ───────────────────────────────────────────────
+  async function fetchNOAA(btn) {
+    const original = btn.innerText;
+    btn.innerText = "Loading...";
+    btn.disabled = true;
+    try {
+      const lat = parseFloat(document.getElementById('centerLat').value) || 9.35;
+      const lon = parseFloat(document.getElementById('centerLon').value) || -82.25;
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_surface_temperature`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("API failed");
+      const data = await res.json();
+      const temps = data?.hourly?.sea_surface_temperature;
+      if (!temps?.length) throw new Error("Bad data");
+      const latest = [...temps].reverse().find(v => v !== null);
+      if (latest === undefined) throw new Error("All null");
+      document.getElementById('temp').value = latest.toFixed(2);
+      runEngine("Live SST");
+    } catch (e) {
+      console.error(e);
+      alert("Live data failed — fallback used");
+      runEngine("Manual Fallback");
     }
+    btn.innerText = original;
+    btn.disabled = false;
+  }
 
-    function runEngine(source) {
-      const T = parseFloat(document.getElementById('temp').value);
-      const O = parseFloat(document.getElementById('omega').value);
-      const N = parseFloat(document.getElementById('nutrients').value);
-      const S = parseFloat(document.getElementById('sediment').value);
-      const L = parseFloat(document.getElementById('light').value);
-      const months = Math.min(60, parseInt(document.getElementById('time').value) || 12);
+  // ── TASK 4: SST GRID ─────────────────────────────────────────────────────────
+  async function runSSTGrid(btn) {
+    const original = btn.innerText;
+    btn.innerText = "Sampling grid...";
+    btn.disabled = true;
 
-      let health = 100;
-      let trajectory = [];
-      
-      const tStress = T > 30 ? (T - 30) * 5 : (30 - T) * 0.5;
-      const recovery = (O / 4) + (L / 10);
-      const degradation = (N + S + tStress) / 5;
+    const centerLat = parseFloat(document.getElementById('centerLat').value) || 9.35;
+    const centerLon = parseFloat(document.getElementById('centerLon').value) || -82.25;
+    const radius    = parseFloat(document.getElementById('gridRadius').value) || 0.5;
+    const size      = parseInt(document.getElementById('gridSize').value) || 3;
 
-      const trajContainer = document.getElementById('trajectoryOutput');
-      trajContainer.innerHTML = '';
-
-      for (let i = 1; i <= months; i++) {
-        health += (recovery - degradation);
-        health = Math.min(100, Math.max(0, health));
-        const val = health.toFixed(1);
-        trajectory.push(val);
-
-        const chip = document.createElement('div');
-        chip.className = 'month-chip';
-        chip.innerHTML = `<b>Month ${i}</b> ${val}%`;
-        trajContainer.appendChild(chip);
+    // Build grid point coordinates
+    const points = [];
+    const half = Math.floor(size / 2);
+    const step = size > 1 ? (radius * 2) / (size - 1) : 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        points.push({
+          lat: +(centerLat + (half - r) * step).toFixed(4),
+          lon: +(centerLon + (c - half) * step).toFixed(4),
+          row: r, col: c
+        });
       }
-
-      const status = health > 70 ? 'Healthy' : health > 40 ? 'Warning' : 'Critical';
-      const risk = (recovery - degradation) < 0 ? 'High' : 'Stable';
-
-      document.getElementById('sourceTag').innerText = source;
-      document.getElementById('healthTag').innerText = health.toFixed(1) + '%';
-      document.getElementById('statusTag').innerText = status;
-      document.getElementById('riskTag').innerText = risk;
-      document.getElementById('decisionOutput').innerText = status === 'Critical' ? 'Immediate intervention required.' : 'Continue regular monitoring.';
-      
-      const result = { source, finalHealth: health.toFixed(1), status, risk, trajectory };
-      document.getElementById('jsonOutput').innerText = JSON.stringify(result, null, 2);
     }
-  </script>
+
+    // Parallel fetch all grid points + baseline + smoothed
+    const [gridTemps, baseline, smoothed] = await Promise.all([
+      Promise.all(points.map(p => fetchPointSST(p.lat, p.lon))),
+      fetchBaseline(centerLat, centerLon),
+      fetchSmoothed(centerLat, centerLon)
+    ]);
+
+    const grid = points.map((p, i) => ({ ...p, sst: gridTemps[i] }));
+
+    // Spatial average
+    const valid = grid.filter(p => p.sst !== null).map(p => p.sst);
+    if (valid.length === 0) {
+      alert("No SST data returned. Try different coordinates.");
+      btn.innerText = original; btn.disabled = false; return;
+    }
+    const avgSST = +(valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(2);
+
+    // Anomaly vs 7-day baseline
+    const anomaly = baseline !== null ? +(avgSST - baseline).toFixed(2) : null;
+
+    // Render grid and stats
+    renderSSTGrid(grid, size, avgSST, anomaly, smoothed);
+
+    // Feed spatial average into engine
+    document.getElementById('temp').value = avgSST;
+    runEngine("SST Grid Avg");
+
+    btn.innerText = original;
+    btn.disabled = false;
+  }
+
+  async function fetchPointSST(lat, lon) {
+    try {
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_surface_temperature`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const temps = data?.hourly?.sea_surface_temperature;
+      if (!temps?.length) return null;
+      const val = [...temps].reverse().find(v => v !== null);
+      return val !== undefined ? +val.toFixed(2) : null;
+    } catch { return null; }
+  }
+
+  async function fetchBaseline(lat, lon) {
+    // 7-day history; use first 24 valid readings as seasonal baseline
+    try {
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_surface_temperature&past_days=7`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const temps = (data?.hourly?.sea_surface_temperature || []).filter(v => v !== null);
+      if (!temps.length) return null;
+      const base = temps.slice(0, 24);
+      return +(base.reduce((a, b) => a + b, 0) / base.length).toFixed(2);
+    } catch { return null; }
+  }
+
+  async function fetchSmoothed(lat, lon) {
+    // Last 24 non-null hourly readings for temporal smoothing
+    try {
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_surface_temperature`;
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data?.hourly?.sea_surface_temperature || [])
+        .filter(v => v !== null).slice(-24).map(v => +v.toFixed(2));
+    } catch { return []; }
+  }
+
+  // ── GRID RENDERER ─────────────────────────────────────────────────────────────
+  function tempToColor(sst, min, max) {
+    if (sst === null) return { bg: '#dde4ee', fg: '#888' };
+    const r = Math.max(0, Math.min(1, (sst - min) / (max - min || 1)));
+    const R = Math.round(30  + r * 200);
+    const G = Math.round(110 - r * 70);
+    const B = Math.round(190 - r * 170);
+    const lum = 0.299*R + 0.587*G + 0.114*B;
+    return { bg: `rgb(${R},${G},${B})`, fg: lum > 140 ? '#111' : '#fff' };
+  }
+
+  function renderSSTGrid(grid, size, avgSST, anomaly, smoothed) {
+    const table  = document.getElementById('sstGridTable');
+    const avgEl  = document.getElementById('sstAvg');
+    const anomEl = document.getElementById('sstAnomaly');
+    const smEl   = document.getElementById('sstSmoothed');
+    const barEl  = document.getElementById('smoothedBar');
+
+    const vals   = grid.map(p => p.sst).filter(v => v !== null);
+    const minSST = Math.min(...vals);
+    const maxSST = Math.max(...vals);
+
+    table.innerHTML = '';
+    for (let r = 0; r < size; r++) {
+      const tr = document.createElement('tr');
+      for (let c = 0; c < size; c++) {
+        const pt  = grid.find(p => p.row === r && p.col === c);
+        const col = tempToColor(pt.sst, minSST, maxSST);
+        const td  = document.createElement('td');
+        td.style.background = col.bg;
+        td.style.color = col.fg;
+        td.innerHTML = pt.sst !== null
+          ? `${pt.sst}°C<span>${pt.lat}°N / ${pt.lon}°</span>`
+          : `N/A<span>${pt.lat}°N / ${pt.lon}°</span>`;
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+
+    avgEl.textContent = avgSST + '°C';
+
+    if (anomaly !== null) {
+      const sign = anomaly > 0 ? '+' : '';
+      anomEl.textContent = sign + anomaly + '°C';
+      anomEl.className = 'sv ' + (anomaly > 0.5 ? 'anomaly-hot' : anomaly < -0.5 ? 'anomaly-cool' : 'anomaly-norm');
+    } else {
+      anomEl.textContent = 'N/A';
+      anomEl.className = 'sv anomaly-norm';
+    }
+
+    if (smoothed.length) {
+      const smAvg = +(smoothed.reduce((a, b) => a + b, 0) / smoothed.length).toFixed(2);
+      smEl.textContent = smAvg + '°C';
+      barEl.innerHTML = smoothed.map(v => `<span class="s-chip">${v}</span>`).join('');
+    } else {
+      smEl.textContent = 'N/A';
+      barEl.innerHTML = '';
+    }
+
+    document.getElementById('sstGridBox').style.display = 'block';
+
+    // Task 5 — anomaly gauge
+    updateAnomalyGauge(anomaly);
+  }
+
+  // ── TASK 5: TRAJECTORY CHART ─────────────────────────────────────────────────
+  function drawTrajectoryChart(trajectory, status) {
+    const canvas = document.getElementById('trajCanvas');
+    const dpr    = window.devicePixelRatio || 1;
+    const W      = canvas.offsetWidth  || 600;
+    const H      = 220;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const PAD = { top: 18, right: 16, bottom: 36, left: 44 };
+    const cW  = W - PAD.left - PAD.right;
+    const cH  = H - PAD.top  - PAD.bottom;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Zone bands
+    const zones = [
+      { from: 70, to: 100, color: 'rgba(29,122,70,0.08)'  },
+      { from: 40, to: 70,  color: 'rgba(154,103,0,0.08)'  },
+      { from: 0,  to: 40,  color: 'rgba(180,35,24,0.08)'  }
+    ];
+    zones.forEach(z => {
+      const y1 = PAD.top + cH * (1 - z.to   / 100);
+      const y2 = PAD.top + cH * (1 - z.from / 100);
+      ctx.fillStyle = z.color;
+      ctx.fillRect(PAD.left, y1, cW, y2 - y1);
+    });
+
+    // Grid lines & Y labels
+    ctx.strokeStyle = '#dce6f0';
+    ctx.lineWidth   = 1;
+    ctx.fillStyle   = '#8a9ab0';
+    ctx.font        = '11px system-ui';
+    ctx.textAlign   = 'right';
+    [0, 25, 50, 75, 100].forEach(v => {
+      const y = PAD.top + cH * (1 - v / 100);
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+      ctx.fillText(v + '%', PAD.left - 6, y + 4);
+    });
+
+    // X axis labels
+    ctx.textAlign  = 'center';
+    ctx.fillStyle  = '#8a9ab0';
+    const months   = trajectory.length;
+    const step     = Math.ceil(months / 8);
+    for (let i = 0; i < months; i += step) {
+      const x = PAD.left + (i / (months - 1)) * cW;
+      ctx.fillText('M' + (i + 1), x, H - PAD.bottom + 16);
+    }
+    ctx.fillText('M' + months, PAD.left + cW, H - PAD.bottom + 16);
+
+    // Gradient fill under curve
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+    grad.addColorStop(0,   'rgba(31,111,178,0.35)');
+    grad.addColorStop(1,   'rgba(31,111,178,0.02)');
+    ctx.beginPath();
+    trajectory.forEach((v, i) => {
+      const x = PAD.left + (i / (months - 1)) * cW;
+      const y = PAD.top  + cH * (1 - parseFloat(v) / 100);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(PAD.left + cW, PAD.top + cH);
+    ctx.lineTo(PAD.left,      PAD.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Curve line
+    const lineColor = status === 'Critical' ? '#b42318' : status === 'Warning' ? '#9a6700' : '#1d7a46';
+    ctx.beginPath();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    trajectory.forEach((v, i) => {
+      const x = PAD.left + (i / (months - 1)) * cW;
+      const y = PAD.top  + cH * (1 - parseFloat(v) / 100);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // End dot
+    const lastX = PAD.left + cW;
+    const lastY = PAD.top  + cH * (1 - parseFloat(trajectory[months - 1]) / 100);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = lineColor;
+    ctx.fill();
+
+    // End label
+    ctx.fillStyle  = lineColor;
+    ctx.font       = 'bold 12px system-ui';
+    ctx.textAlign  = 'left';
+    ctx.fillText(trajectory[months - 1] + '%', lastX + 7, lastY + 4);
+  }
+
+  // ── TASK 5: ANOMALY GAUGE ────────────────────────────────────────────────────
+  function updateAnomalyGauge(anomaly) {
+    const wrap   = document.getElementById('anomalyGaugeWrap');
+    const needle = document.getElementById('anomalyNeedle');
+    const valEl  = document.getElementById('anomalyGaugeVal');
+    if (anomaly === null) { wrap.style.display = 'none'; return; }
+
+    // Map anomaly (-3 to +3°C) to 0–100% position
+    const clamped = Math.max(-3, Math.min(3, anomaly));
+    const pct     = ((clamped + 3) / 6) * 100;
+    needle.style.left = pct + '%';
+
+    const sign = anomaly > 0 ? '+' : '';
+    valEl.textContent = sign + anomaly + '°C vs 7-day baseline';
+    valEl.style.color = anomaly > 0.5 ? '#b42318' : anomaly < -0.5 ? '#1565c0' : '#5f7288';
+    wrap.style.display = 'block';
+  }
+
+
+  function resetForm() {
+    document.getElementById('preset').value = 'custom';
+    applyPreset();
+    ['healthTag','statusTag','riskTag'].forEach(id => document.getElementById(id).innerText = '—');
+    document.getElementById('trajectoryOutput').innerHTML = '';
+    document.getElementById('decisionOutput').innerText = 'Awaiting run...';
+    document.getElementById('jsonOutput').innerText = '{}';
+    document.getElementById('sstGridBox').style.display = 'none';
+    document.getElementById('sstGridTable').innerHTML = '';
+    document.getElementById('smoothedBar').innerHTML = '';
+    document.getElementById('anomalyGaugeWrap').style.display = 'none';
+    const canvas = document.getElementById('trajCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // ── ENGINE ───────────────────────────────────────────────────────────────────
+  function runEngine(source) {
+    const T = parseFloat(document.getElementById('temp').value);
+    const O = parseFloat(document.getElementById('omega').value);
+    const N = parseFloat(document.getElementById('nutrients').value);
+    const S = parseFloat(document.getElementById('sediment').value);
+    const L = parseFloat(document.getElementById('light').value);
+    const months = Math.min(60, parseInt(document.getElementById('time').value) || 12);
+
+    let health = 80; // realistic starting point for a monitored reef
+
+    // Equilibrium health — the level this reef trends toward given current conditions
+    const tPenalty  = T > 29 ? (T - 29) * 8 : T < 24 ? (24 - T) * 5 : 0;
+    const oPenalty  = O < 3.5 ? (3.5 - O) * 15 : Math.min((O - 3.5) * 5, 10);
+    const nPenalty  = N * 4;
+    const sPenalty  = S * 3;
+    const lBonus    = (L - 5) * 2;
+    const Heq = Math.min(100, Math.max(0, 100 - tPenalty + oPenalty - nPenalty - sPenalty + lBonus));
+
+    // Monthly drift rate toward equilibrium (15% per month)
+    const DRIFT = 0.15;
+
+    const trajContainer = document.getElementById('trajectoryOutput');
+    trajContainer.innerHTML = '';
+    const trajectory = [];
+
+    for (let i = 1; i <= months; i++) {
+      health += (Heq - health) * DRIFT;
+      health = Math.min(100, Math.max(0, health));
+      const val = health.toFixed(1);
+      trajectory.push(val);
+      const chip = document.createElement('div');
+      chip.className = 'month-chip';
+      chip.innerHTML = `<b>Month ${i}</b> ${val}%`;
+      trajContainer.appendChild(chip);
+    }
+
+    const status = health > 70 ? 'Healthy' : health > 40 ? 'Warning' : 'Critical';
+    const risk   = Heq < health ? 'High' : Heq < 70 ? 'Elevated' : 'Stable';
+
+    document.getElementById('sourceTag').innerText      = source;
+    document.getElementById('healthTag').innerText      = health.toFixed(1) + '%';
+    document.getElementById('statusTag').innerText      = status;
+    document.getElementById('riskTag').innerText        = risk;
+    document.getElementById('decisionOutput').innerText = status === 'Critical'
+      ? 'Immediate intervention required.' : 'Continue regular monitoring.';
+
+    document.getElementById('jsonOutput').innerText =
+      JSON.stringify({ source, finalHealth: health.toFixed(1), status, risk, trajectory }, null, 2);
+
+    // Task 5 — draw chart
+    drawTrajectoryChart(trajectory, status);
+  }
+
+</script>
 </body>
 </html>
