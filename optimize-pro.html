@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -171,7 +172,7 @@
 
       <div class="box">
         <h3>Reef Health Trajectory</h3>
-        <canvas id="trajCanvas"></canvas>
+        <canvas id="trajCanvas" height="220"></canvas>
         <div id="trajectoryOutput" class="trajectory-list" style="display:none;"></div>
       </div>
 
@@ -575,8 +576,8 @@
     document.getElementById('jsonOutput').innerText =
       JSON.stringify({ source, finalHealth: health.toFixed(1), status, risk, trajectory }, null, 2);
 
-    // Task 5 — draw chart
-    drawTrajectoryChart(trajectory, status);
+    // Task 5 — draw chart (defer until browser has laid out canvas dimensions)
+    requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
   }
 
 </script>
