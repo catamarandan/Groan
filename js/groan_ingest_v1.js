@@ -4,9 +4,9 @@ let DTI_REGISTRY = null;
 
 // Load DTI registry
 export async function loadDTI() {
-  const res = await fetch('config/dti_registry_v1.json');
+  const res = await fetch('/Groan/config/dti_registry_v1.json');
   if (!res.ok) throw new Error("DTI fetch failed");
-  const rule = DTI_REGISTRY.DTIs[record.dti];
+  DTI_REGISTRY = await res.json();
   console.log("DTI Loaded:", DTI_REGISTRY);
 }
 
@@ -15,25 +15,18 @@ function reject(reason, record) {
   return { status: "REJECTED", reason, record };
 }
 
-// Validate required fields
-function validateRequired(r) {
-  if (!r.site_id || !r.time || !r.dti || r.value === undefined) {
-    throw "ERR_MISSING_FIELD";
-  }
-}
-
-// Validate time
-function validateTime(t) {
-  if (isNaN(Date.parse(t))) throw "ERR_INVALID_TIME";
-}
-
 // MAIN INGEST FUNCTION
 export function ingest(record) {
   try {
     if (!DTI_REGISTRY) throw "ERR_NO_DTI_LOADED";
 
-    validateRequired(record);
-    validateTime(record.time);
+    if (!record.site_id || !record.time || !record.dti || record.value === undefined) {
+      throw "ERR_MISSING_FIELD";
+    }
+
+    if (isNaN(Date.parse(record.time))) {
+      throw "ERR_INVALID_TIME";
+    }
 
     const rule = DTI_REGISTRY.DTIs[record.dti];
     if (!rule) throw "ERR_INVALID_DTI";
