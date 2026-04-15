@@ -188,23 +188,29 @@
   </div>
 </div>
 
-<script>
+requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
+}
+</script>   <!-- ✅ CLOSE YOUR MAIN SCRIPT -->
 
-  // ── PRESETS ──────────────────────────────────────────────────────────────────
-  function applyPreset() {
-    const p = document.getElementById('preset').value;
-    const vals = {
-      healthy: {t:26, o:4.0, n:1, s:1, l:9},
-      critical: {t:32, o:2.2, n:8, s:7, l:3},
-      custom:   {t:28, o:3.5, n:3, s:2, l:8}
-    }[p];
-    if (!vals) return;
-    document.getElementById('temp').value      = vals.t;
-    document.getElementById('omega').value     = vals.o;
-    document.getElementById('nutrients').value = vals.n;
-    document.getElementById('sediment').value  = vals.s;
-    document.getElementById('light').value     = vals.l;
-  }
+<script type="module">
+  console.log("GROAN TEST SCRIPT LOADED");
+
+  import { loadDTI, ingest } from './js/groan_ingest_v1.js';
+
+  await loadDTI();
+
+  const ok = {
+    site_id: "TEST_001",
+    time: "2026-04-15T12:00:00Z",
+    dti: "REEF_BLEACHING_PCT",
+    value: 35
+  };
+
+  console.log("TEST RESULT:", ingest(ok));
+</script>
+
+</body>
+</html>
 
   // ── SINGLE-POINT NOAA (Task 3) ───────────────────────────────────────────────
   async function fetchNOAA(btn) {
