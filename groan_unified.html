@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GROAN UNIFIED</title>
+</head>
+
+<body>
+
+<h2>GROAN UNIFIED</h2>
+
+<button onclick="run()">Run</button>
+
+<pre id="output"></pre>
+
+<script>
+
+function run(){
+
+  const temp = 29.9;
+
+  const dtis = [
+    {dti:"WATER_TEMP_C", value:temp},
+    {dti:"OUTCOME_SIGNAL", value:"stable"}
+  ];
+
+  document.getElementById("output").textContent =
+`DTI: WATER_TEMP_C, OUTCOME_SIGNAL
+
+TEMP: ${temp}
+
+FULL:
+${JSON.stringify(dtis,null,2)}
+`;
+
+}
+
+</script>
+
+</body>
+</html>
