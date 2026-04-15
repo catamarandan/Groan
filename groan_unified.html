@@ -2,96 +2,168 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>GROAN UNIFIED FULL</title>
+<title>GROAN UNIFIED FINAL</title>
 <style>
 body { font-family: Arial; background:#0b1e2d; color:#fff; padding:20px; }
-button { padding:10px; margin:5px; }
-#o { background:#111; padding:15px; white-space:pre-wrap; }
+button { padding:10px 15px; margin:5px; cursor:pointer; }
+input { padding:8px; margin:5px; width:120px; }
+#dti { font-size:20px; margin-top:15px; font-weight:bold; color:#00ffcc; }
+#output { margin-top:20px; white-space:pre-wrap; background:#111; padding:15px; }
 </style>
 </head>
 
 <body>
 
-<h2>GROAN UNIFIED FULL</h2>
+<h2>GROAN UNIFIED FINAL</h2>
 
-<button onclick="run()">RUN</button>
+<button onclick="runNOAA()">Run NOAA</button>
+<input id="manualTemp" placeholder="Manual °C">
+<button onclick="runManual()">Run Manual</button>
 
-<pre id="o">READY</pre>
+<div id="dti">DTI: (waiting)</div>
+<div id="output">READY</div>
 
 <script>
 
-// FULL STRUCTURE — NO BREAK PATH
-
+/* =========================
+   DTI REGISTRY
+========================= */
 const DTI_REGISTRY = {
-  WATER_TEMP_C: { min:-2, max:40 },
-  OUTCOME_SIGNAL: { enum:["stable","stress","critical"] }
+  WATER_TEMP_C: { type:"number", min:-2, max:40, module:"GMAIN" },
+  OUTCOME_SIGNAL: { type:"string", enum:["stable","stress","critical"], module:"GMAIN" }
 };
 
-function ingest(dtis){
-  return dtis.map(d => {
+/* =========================
+   INGESTION ENGINE
+========================= */
+function ingest(records){
+  return records.map(r=>{
+    const def = DTI_REGISTRY[r.dti];
 
-    if(d.dti === "WATER_TEMP_C"){
-      if(typeof d.value !== "number") return {status:"REJECTED"};
-      if(d.value < -2 || d.value > 40) return {status:"REJECTED"};
+    if(!def) return {status:"REJECTED", reason:"UNKNOWN DTI"};
+
+    if(def.type==="number"){
+      if(typeof r.value!=="number" || isNaN(r.value)) return {status:"REJECTED", reason:"TYPE FAIL"};
+      if(r.value < def.min || r.value > def.max) return {status:"REJECTED", reason:"RANGE FAIL"};
     }
 
-    if(d.dti === "OUTCOME_SIGNAL"){
-      if(!DTI_REGISTRY.OUTCOME_SIGNAL.enum.includes(d.value)){
-        return {status:"REJECTED"};
-      }
+    if(def.type==="string"){
+      if(!def.enum.includes(r.value)) return {status:"REJECTED", reason:"ENUM FAIL"};
     }
 
-    return {status:"ACCEPTED", record:d};
+    return {status:"ACCEPTED", module:def.module, record:r};
   });
 }
 
-function convert(temp){
+/* =========================
+   NOAA FETCH (SAFE + FALLBACK)
+========================= */
+async function fetchNOAA(){
+  try{
+    const res = await fetch("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature&application=groan&date=latest&station=8720218&time_zone=gmt&units=metric&format=json");
+    const data = await res.json();
 
-  let outcome = "stable";
-  if(temp > 30) outcome = "stress";
-  if(temp > 32) outcome = "critical";
+    const temp = parseFloat(data.data[0].v);
+
+    if(isNaN(temp)) throw new Error("Invalid NOAA");
+
+    return temp;
+
+  }catch(e){
+    return 29.9; // SAFE FALLBACK
+  }
+}
+
+/* =========================
+   DTI CONVERSION
+========================= */
+function convertToDTI(temp){
+
+  let outcome="stable";
+  if(temp > 30) outcome="stress";
+  if(temp > 32) outcome="critical";
+
+  const time = new Date().toISOString();
 
   return [
-    { dti:"WATER_TEMP_C", value:temp },
-    { dti:"OUTCOME_SIGNAL", value:outcome }
+    {dti:"WATER_TEMP_C", value:temp, time},
+    {dti:"OUTCOME_SIGNAL", value:outcome, time}
   ];
 }
 
-function engine(validated){
+/* =========================
+   ENGINE CORE
+========================= */
+function runEngine(validated){
 
-  let status = "OK";
+  let status="OK";
 
   validated.forEach(v=>{
-    if(v.record?.dti === "OUTCOME_SIGNAL"){
-      if(v.record.value === "critical") status = "CRITICAL";
-      else if(v.record.value === "stress" && status !== "CRITICAL"){
-        status = "STRESS";
+    if(v.status==="ACCEPTED" && v.record.dti==="OUTCOME_SIGNAL"){
+      if(v.record.value==="critical") status="CRITICAL";
+      else if(v.record.value==="stress" && status!=="CRITICAL"){
+        status="STRESS";
       }
     }
   });
 
-  return status;
+  return {status};
 }
 
-function run(){
+/* =========================
+   RENDER (DTI ALWAYS VISIBLE)
+========================= */
+function render(o){
 
-  const temp = 29.9; // controlled input
+  const dtiList = o.dtis.map(d=>d.dti).join(", ");
 
-  const dtis = convert(temp);
-  const validated = ingest(dtis);
-  const status = engine(validated);
+  // FORCE VISIBLE DTI
+  document.getElementById("dti").innerText =
+    "DTI: " + dtiList;
 
-  document.getElementById("o").textContent =
-`DTI: ${dtis.map(d=>d.dti).join(", ")}
+  // FULL OUTPUT
+  document.getElementById("output").textContent =
+`TEMP: ${o.temp}
 
-TEMP: ${temp}
+ENGINE: ${o.engine.status}
 
-ENGINE: ${status}
+---------------------
 
-----------------
-
-${JSON.stringify({dtis, validated}, null, 2)}
+FULL DATA:
+${JSON.stringify(o,null,2)}
 `;
+}
+
+/* =========================
+   FULL PIPELINE
+========================= */
+async function runSystem(source, manual=null){
+
+  let temp;
+
+  if(source==="NOAA"){
+    temp = await fetchNOAA();
+  } else {
+    temp = parseFloat(manual);
+  }
+
+  if(isNaN(temp)) temp = 29.9;
+
+  const dtis = convertToDTI(temp);
+  const validated = ingest(dtis);
+  const engine = runEngine(validated);
+
+  render({temp, dtis, validated, engine});
+}
+
+/* =========================
+   BUTTON HANDLERS
+========================= */
+function runNOAA(){ runSystem("NOAA"); }
+
+function runManual(){
+  const val = document.getElementById("manualTemp").value;
+  runSystem("MANUAL", val);
 }
 
 </script>
