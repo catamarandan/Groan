@@ -581,24 +581,26 @@
     // Task 5 — draw chart (defer until browser has laid out canvas dimensions)
     requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
   }
-</script>
-
 <script type="module">
-  console.log("GROAN TEST SCRIPT LOADED");
+  console.log("REAL DATA TEST");
 
   import { loadDTI, ingest } from './js/groan_ingest_v1.js';
   import { fetchSST } from './js/noaa_fetch.js';
-  
-  const DTI = await loadDTI();
 
-  const ok = {
-    site_id: "TEST_001",
-    time: "2026-04-15T12:00:00Z",
-    dti: "REEF_BLEACHING_PCT",
-    value: 35
-  };
+  await loadDTI();
 
-  console.log("TEST RESULT:", ingest(ok));
+  const tempC = await fetchSST();
+
+  console.log("SST:", tempC);
+
+  const result = ingest({
+    site_id: "NOAA_TEST",
+    time: new Date().toISOString(),
+    dti: "WATER_TEMP_C",
+    value: tempC
+  });
+
+  console.log("INGEST RESULT:", result);
 </script>
 </body>
 </html>
