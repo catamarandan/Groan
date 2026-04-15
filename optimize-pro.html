@@ -588,7 +588,7 @@
 
   import { loadDTI, ingest } from './js/groan_ingest_v1.js';
 
-  await loadDTI();
+  const DTI = await loadDTI();
 
   const ok = {
     site_id: "TEST_001",
