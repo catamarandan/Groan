@@ -1,1 +1,128 @@
+{
+  "version": "1.0",
+  "modules": ["GRIN", "GSIN", "GMIN", "GMAIN"],
 
+  "DTIs": {
+
+    "REEF_CORAL_CONDITION": {
+      "module": "GRIN",
+      "type": "enum",
+      "values": ["healthy", "stressed", "bleached", "diseased"]
+    },
+
+    "REEF_BLEACHING_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
+
+    "CORAL_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
+
+    "ALGAE_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
+
+    "SEDIMENT_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
+
+    "SEAGRASS_COVER_PCT": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
+
+    "SEAGRASS_HEALTH_INDEX": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
+
+    "MANGROVE_CANOPY_INDEX": {
+      "module": "GMIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
+
+    "MANGROVE_DENSITY_INDEX": {
+      "module": "GMIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
+
+    "WATER_TEMP_C": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "C",
+      "min": -2,
+      "max": 40
+    },
+
+    "WATER_TURBIDITY_NTU": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "NTU",
+      "min": 0,
+      "max": 1000
+    },
+
+    "VISIBILITY_M": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 50
+    },
+
+    "INTERVENTION_TYPE": {
+      "module": "GMAIN",
+      "type": "enum",
+      "values": [
+        "none",
+        "nursery",
+        "outplant",
+        "sediment_control",
+        "mangrove_restoration",
+        "seagrass_restoration"
+      ]
+    },
+
+    "OUTCOME_SIGNAL": {
+      "module": "GMAIN",
+      "type": "enum",
+      "values": ["improved", "stable", "declined"]
+    },
+
+    "OUTCOME_TIME_DAYS": {
+      "module": "GMAIN",
+      "type": "integer",
+      "unit": "days",
+      "min": 0,
+      "max": 3650
+    }
+  }
+}
