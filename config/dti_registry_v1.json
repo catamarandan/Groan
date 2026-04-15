@@ -1,45 +1,129 @@
 {
-  "version": "1.0",
-  "modules": ["GRIN", "GSIN", "GMIN", "GMAIN"],
+  "version": "1.1",
+  "updated": "2026-04-15",
+  "owner": "Nevado Ranch Camp LLC",
+  "system": "GROAN™ — Global Reef & Ocean Analytics Network",
+  "notes": "v1.1 — removed GMAIN (not a GROAN module); physical/env DTIs routed to GKIN; interventions to DMAP-CAL™; outcomes to CMIE. Added 14 missing DTIs per GROAN spec.",
+
+  "modules": ["GRIN", "GSIN", "GMIN", "GKIN", "CMIE", "DMAP-CAL™", "MOOP"],
 
   "DTIs": {
-
-    "REEF_CORAL_CONDITION": {
-      "module": "GRIN",
-      "type": "enum",
-      "values": ["healthy", "stressed", "bleached", "diseased"]
-    },
-
-    "REEF_BLEACHING_PCT": {
-      "module": "GRIN",
-      "type": "float",
-      "unit": "%",
-      "min": 0,
-      "max": 100
-    },
 
     "CORAL_COVER_PCT": {
       "module": "GRIN",
       "type": "float",
       "unit": "%",
       "min": 0,
-      "max": 100
+      "max": 100,
+      "description": "Live coral cover from belt transect (25m x 4m)"
     },
-
     "ALGAE_COVER_PCT": {
       "module": "GRIN",
       "type": "float",
       "unit": "%",
       "min": 0,
-      "max": 100
+      "max": 100,
+      "description": "Macroalgae cover from belt transect"
     },
-
+    "CCA_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "description": "Crustose coralline algae cover — succession stage indicator"
+    },
+    "BARE_SUBSTRATE_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "description": "Bare carbonate substrate from belt transect"
+    },
     "SEDIMENT_COVER_PCT": {
       "module": "GRIN",
       "type": "float",
       "unit": "%",
       "min": 0,
-      "max": 100
+      "max": 100,
+      "description": "Sediment cover on reef substrate — LBSP proxy"
+    },
+    "REEF_BLEACHING_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "description": "Percentage of observed coral showing bleaching (pale, partial, or full)"
+    },
+    "REEF_CORAL_CONDITION": {
+      "module": "GRIN",
+      "type": "enum",
+      "values": ["healthy", "pale", "partial_bleach", "full_bleach", "recovering", "diseased", "dead"],
+      "description": "Dominant coral condition state at survey site"
+    },
+    "SUCCESSION_STAGE": {
+      "module": "GRIN",
+      "type": "enum",
+      "values": ["pioneer", "transitional", "climax", "arrested"],
+      "description": "Ecological succession stage — recovery index input to DMAP-CAL™"
+    },
+    "PAM_FV_FM": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "ratio",
+      "min": 0,
+      "max": 0.75,
+      "description": "Fv/Fm quantum yield of PSII. Healthy: 0.55-0.65. Pre-bleach stress: <0.45. Severe dysfunction: <0.30. Must be measured <50 µmol PAR."
+    },
+    "JUVENILE_CORAL_DENSITY_M2": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "count/m²",
+      "min": 0,
+      "max": 500,
+      "description": "Juvenile coral density (<4cm diameter) per m² — recruitment signal"
+    },
+    "HERBIVORE_BIOMASS_KG_HA": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "kg/ha",
+      "min": 0,
+      "max": 5000,
+      "description": "Herbivore functional group biomass (parrotfish + surgeonfish + urchins) from fish survey"
+    },
+    "APEX_PREDATOR_INDEX": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Apex predator encounter rate normalized to circuit 1 baseline — trophic cascade trigger"
+    },
+    "LIONFISH_DENSITY_100M2": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "count/100m²",
+      "min": 0,
+      "max": 200,
+      "description": "Lionfish density per 100m² — herbivore suppression signal distinct from overfishing"
+    },
+    "SCTLD_PREVALENCE_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "description": "Stony Coral Tissue Loss Disease prevalence at survey site. Non-additive with thermal bleaching — must be logged separately in CMIE."
+    },
+    "ALGAE_CONTACT_MARGIN_M": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 100,
+      "description": "Total algae-coral contact margin length per transect — allelopathy zone proxy"
     },
 
     "SEAGRASS_COVER_PCT": {
@@ -47,15 +131,24 @@
       "type": "float",
       "unit": "%",
       "min": 0,
-      "max": 100
+      "max": 100,
+      "description": "Seagrass meadow cover in lagoon/back-reef zone"
     },
-
     "SEAGRASS_HEALTH_INDEX": {
       "module": "GSIN",
       "type": "float",
       "unit": "index",
       "min": 0,
-      "max": 1
+      "max": 1,
+      "description": "Composite seagrass health — blade density, rhizome architecture, sediment condition"
+    },
+    "SEAGRASS_CARBON_BURIAL_INDEX": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Biological pump efficiency proxy — sediment darkness, rhizome intact, no bioturbation"
     },
 
     "MANGROVE_CANOPY_INDEX": {
@@ -63,66 +156,240 @@
       "type": "float",
       "unit": "index",
       "min": 0,
-      "max": 1
+      "max": 1,
+      "description": "Mangrove canopy cover normalized index"
     },
-
     "MANGROVE_DENSITY_INDEX": {
       "module": "GMIN",
       "type": "float",
       "unit": "index",
       "min": 0,
-      "max": 1
+      "max": 1,
+      "description": "Mangrove prop root/stem density index"
+    },
+    "MANGROVE_DOC_EXPORT_INDEX": {
+      "module": "GMIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Estimated DOC export capacity to adjacent seagrass/reef — derived from canopy area"
     },
 
     "WATER_TEMP_C": {
-      "module": "GMAIN",
+      "module": "GKIN",
       "type": "float",
-      "unit": "C",
+      "unit": "°C",
       "min": -2,
-      "max": 40
+      "max": 40,
+      "source": "Source_001",
+      "description": "Absolute sea surface or water column temperature"
     },
-
+    "WATER_TEMP_ANOMALY_C": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "°C",
+      "min": -10,
+      "max": 10,
+      "source": "Source_001",
+      "description": "SST anomaly vs. site MMM (Maximum Monthly Mean) baseline. >+1°C for >4 weeks triggers Sverdrup NPP flag."
+    },
+    "OMEGA_ARAGONITE": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "dimensionless",
+      "min": 0,
+      "max": 6,
+      "description": "Aragonite saturation state. Monitor: 2.5-3.5. Alert: 1.5-2.5. Critical/tipping: <1.5 (net negative accretion trigger)."
+    },
+    "NUTRIENT_NP_RATIO": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "ratio",
+      "min": 0,
+      "max": 200,
+      "description": "DIN:DIP ratio vs. Redfield baseline 16:1. >20 = anthropogenic N loading (Tier 2 LBSP). <8 = N-cycling perturbation (GKIN flag)."
+    },
+    "NUTRIENT_DIN_UML": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "µmol/L",
+      "min": 0,
+      "max": 500,
+      "description": "Dissolved inorganic nitrogen (NH4+ + NO2- + NO3-). Sample must be preserved within 30 min."
+    },
+    "NUTRIENT_DIP_UML": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "µmol/L",
+      "min": 0,
+      "max": 100,
+      "description": "Dissolved inorganic phosphorus (PO4³⁻). Sample must be preserved within 30 min."
+    },
     "WATER_TURBIDITY_NTU": {
-      "module": "GMAIN",
+      "module": "GKIN",
       "type": "float",
       "unit": "NTU",
       "min": 0,
-      "max": 1000
+      "max": 1000,
+      "description": "Water turbidity — LBSP sediment proxy"
     },
-
-    "VISIBILITY_M": {
-      "module": "GMAIN",
+    "SECCHI_DEPTH_M": {
+      "module": "GKIN",
       "type": "float",
       "unit": "meters",
       "min": 0,
-      "max": 50
+      "max": 50,
+      "description": "Secchi disk depth — turbidity proxy, concurrent with water chemistry sampling"
+    },
+    "VISIBILITY_M": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 50,
+      "description": "Horizontal underwater visibility at survey depth"
+    },
+    "WAVE_HEIGHT_M": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 20,
+      "source": "Source_002",
+      "description": "Significant wave height (Hs) — Source 002. Visual Beaufort estimate or instrument."
+    },
+    "THERMOCLINE_DEPTH_M": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 200,
+      "description": "Thermocline depth (max dT/dz) from CTD profile. <50m triggers DVM compression flag."
+    },
+    "DISSOLVED_OXYGEN_MGL": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "mg/L",
+      "min": 0,
+      "max": 20,
+      "description": "Dissolved oxygen from CTD profile"
+    },
+    "TIDAL_PHASE_COMPLIANCE": {
+      "module": "MOOP",
+      "type": "enum",
+      "values": ["compliant", "non_compliant", "flagged_resurvey"],
+      "description": "Survey tidal phase vs. circuit 1 anchor (±1hr). Non-compliant data cannot enter longitudinal cover trend."
+    },
+    "IMAGE_CONFIDENCE_TIER": {
+      "module": "MOOP",
+      "type": "enum",
+      "values": ["high", "moderate", "low"],
+      "description": "GSIN image confidence tier assigned at ingestion. High>85%, Moderate 60-85%, Low<60%."
+    },
+    "OBSERVER_PAIR_CALIBRATED": {
+      "module": "MOOP",
+      "type": "enum",
+      "values": ["certified", "provisional", "failed"],
+      "description": "Observer pair calibration status from Banco Chinchorro standard transect. Uncertified data not accepted into pipeline."
     },
 
+    "CMIE_CASCADE_FLAG": {
+      "module": "CMIE",
+      "type": "enum",
+      "values": ["none", "trophic_cascade", "lbsp_upstream", "thermal_pre_bleach", "sctld_compound", "phase_shift_proximity", "compounding_pulse"],
+      "description": "Cross-module interaction signal type. Multiple flags allowed per site per circuit."
+    },
+    "CMIE_PHASE_SHIFT_PROXIMITY": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Proximity to coral-algae phase shift threshold (0=low risk, 1=imminent). Weighted by hysteresis asymmetry."
+    },
+    "CMIE_RESILIENCE_INDEX": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Estimated reef resilience — rate of recovery between disturbance events across circuits."
+    },
+    "CMIE_RESISTANCE_INDEX": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1,
+      "description": "Estimated reef resistance — magnitude of disturbance survived without phase shift."
+    },
+    "COVER_TRAJECTORY": {
+      "module": "CMIE",
+      "type": "enum",
+      "values": ["recovering", "stable", "declining", "accelerating_decline", "insufficient_data"],
+      "description": "Multi-circuit coral cover trajectory. Requires ≥2 circuits. Overrides status-only DS for routing."
+    },
+    "OUTCOME_SIGNAL": {
+      "module": "CMIE",
+      "type": "enum",
+      "values": ["improved", "stable", "declined", "critical"],
+      "description": "Circuit-over-circuit outcome classification from CMIE"
+    },
+
+    "DS_SCORE": {
+      "module": "DMAP-CAL™",
+      "type": "float",
+      "unit": "score",
+      "min": 0,
+      "max": 10,
+      "description": "Decision Score: DS = α·E[Benefit] − β·Risk − γ·Cost + δ·Feasibility"
+    },
+    "DS_LOCAL_DRIVER_PCT": {
+      "module": "DMAP-CAL™",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "description": "Percentage of DS driven by locally actionable stressors (Tier 1-4). Critical for intervention ROI calculation."
+    },
+    "INTERVENTION_TIER": {
+      "module": "DMAP-CAL™",
+      "type": "integer",
+      "min": 1,
+      "max": 5,
+      "description": "DMAP-CAL™ intervention tier. 1=site-level (mooring/diver), 2=local regulation, 3=MPA/watershed, 4=restoration, 5=global advocacy."
+    },
     "INTERVENTION_TYPE": {
-      "module": "GMAIN",
+      "module": "DMAP-CAL™",
       "type": "enum",
       "values": [
         "none",
-        "nursery",
-        "outplant",
-        "sediment_control",
-        "mangrove_restoration",
-        "seagrass_restoration"
-      ]
+        "t1_mooring_buoy",
+        "t1_diver_management",
+        "t1_no_anchor_zone",
+        "t1_sunscreen_free_zone",
+        "t2_nutrient_source_control",
+        "t2_sediment_control",
+        "t2_fisheries_regulation",
+        "t2_lionfish_removal",
+        "t3_mpa_establishment",
+        "t3_watershed_management",
+        "t4_mangrove_restoration",
+        "t4_seagrass_restoration",
+        "t4_coral_nursery_outplant",
+        "t5_policy_advocacy"
+      ],
+      "description": "Specific DMAP-CAL™ intervention — prefixed by tier for routing clarity. Tier 5 = climate/global only."
     },
-
-    "OUTCOME_SIGNAL": {
-      "module": "GMAIN",
-      "type": "enum",
-      "values": ["improved", "stable", "declined"]
-    },
-
     "OUTCOME_TIME_DAYS": {
-      "module": "GMAIN",
+      "module": "DMAP-CAL™",
       "type": "integer",
       "unit": "days",
       "min": 0,
-      "max": 3650
+      "max": 3650,
+      "description": "Expected time to measurable outcome from intervention initiation"
     }
   }
 }
+
