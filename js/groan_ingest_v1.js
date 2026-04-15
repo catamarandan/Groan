@@ -4,10 +4,10 @@ let DTI_REGISTRY = null;
 
 // Load DTI registry
 export async function loadDTI() {
-  const res = await fetch('/Groan/config/dti_registry_v1.json');
-  if (!res.ok) throw new Error("DTI fetch failed");
+  const res = await fetch('./config/dti_registry_v1.json');
   DTI_REGISTRY = await res.json();
   console.log("DTI Loaded:", DTI_REGISTRY);
+  return DTI_REGISTRY;
 }
 
 // Reject helper
