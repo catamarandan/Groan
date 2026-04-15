@@ -581,7 +581,28 @@
     // Task 5 — draw chart (defer until browser has laid out canvas dimensions)
     requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
   }
+<script type="module">
+  import { loadDTI, ingest } from './js/groan_ingest_v1.js';
 
+  await loadDTI();
+
+  const ok = {
+    site_id: "TEST_001",
+    time: "2026-04-15T12:00:00Z",
+    dti: "REEF_BLEACHING_PCT",
+    value: 35
+  };
+
+  const bad = {
+    site_id: "TEST_002",
+    time: "2026-04-15T12:00:00Z",
+    dti: "REEF_BLEACHING_PCT",
+    value: 135
+  };
+
+  console.log("OK RESULT:", ingest(ok));
+  console.log("BAD RESULT:", ingest(bad));
+</script>
 </script>
 </body>
 </html>
