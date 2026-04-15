@@ -6,7 +6,7 @@ let DTI_REGISTRY = null;
 export async function loadDTI() {
   const res = await fetch('config/dti_registry_v1.json');
   if (!res.ok) throw new Error("DTI fetch failed");
-  DTI_REGISTRY = await res.json();
+  const rule = DTI_REGISTRY.DTIs[record.dti];
   console.log("DTI Loaded:", DTI_REGISTRY);
 }
 
