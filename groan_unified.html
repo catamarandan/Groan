@@ -1,172 +1,128 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>GROAN UNIFIED FINAL</title>
-<style>
-body { font-family: Arial; background:#0b1e2d; color:#fff; padding:20px; }
-button { padding:10px 15px; margin:5px; cursor:pointer; }
-input { padding:8px; margin:5px; width:120px; }
-#dti { font-size:20px; margin-top:15px; font-weight:bold; color:#00ffcc; }
-#output { margin-top:20px; white-space:pre-wrap; background:#111; padding:15px; }
-</style>
-</head>
+{
+  "version": "1.0",
+  "modules": ["GRIN", "GSIN", "GMIN", "GMAIN"],
 
-<body>
+  "DTIs": {
 
-<h2>GROAN UNIFIED FINAL</h2>
+    "REEF_CORAL_CONDITION": {
+      "module": "GRIN",
+      "type": "enum",
+      "values": ["healthy", "stressed", "bleached", "diseased"]
+    },
 
-<button onclick="runNOAA()">Run NOAA</button>
-<input id="manualTemp" placeholder="Manual °C">
-<button onclick="runManual()">Run Manual</button>
+    "REEF_BLEACHING_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
 
-<div id="dti">DTI: (waiting)</div>
-<div id="output">READY</div>
+    "CORAL_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
 
-<script>
+    "ALGAE_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
 
-/* =========================
-   DTI REGISTRY
-========================= */
-const DTI_REGISTRY = {
-  WATER_TEMP_C: { type:"number", min:-2, max:40, module:"GMAIN" },
-  OUTCOME_SIGNAL: { type:"string", enum:["stable","stress","critical"], module:"GMAIN" }
-};
+    "SEDIMENT_COVER_PCT": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
 
-/* =========================
-   INGESTION ENGINE
-========================= */
-function ingest(records){
-  return records.map(r=>{
-    const def = DTI_REGISTRY[r.dti];
+    "SEAGRASS_COVER_PCT": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "%",
+      "min": 0,
+      "max": 100
+    },
 
-    if(!def) return {status:"REJECTED", reason:"UNKNOWN DTI"};
+    "SEAGRASS_HEALTH_INDEX": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
 
-    if(def.type==="number"){
-      if(typeof r.value!=="number" || isNaN(r.value)) return {status:"REJECTED", reason:"TYPE FAIL"};
-      if(r.value < def.min || r.value > def.max) return {status:"REJECTED", reason:"RANGE FAIL"};
+    "MANGROVE_CANOPY_INDEX": {
+      "module": "GMIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
+
+    "MANGROVE_DENSITY_INDEX": {
+      "module": "GMIN",
+      "type": "float",
+      "unit": "index",
+      "min": 0,
+      "max": 1
+    },
+
+    "WATER_TEMP_C": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "C",
+      "min": -2,
+      "max": 40
+    },
+
+    "WATER_TURBIDITY_NTU": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "NTU",
+      "min": 0,
+      "max": 1000
+    },
+
+    "VISIBILITY_M": {
+      "module": "GMAIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 50
+    },
+
+    "INTERVENTION_TYPE": {
+      "module": "GMAIN",
+      "type": "enum",
+      "values": [
+        "none",
+        "nursery",
+        "outplant",
+        "sediment_control",
+        "mangrove_restoration",
+        "seagrass_restoration"
+      ]
+    },
+
+    "OUTCOME_SIGNAL": {
+      "module": "GMAIN",
+      "type": "enum",
+      "values": ["improved", "stable", "declined"]
+    },
+
+    "OUTCOME_TIME_DAYS": {
+      "module": "GMAIN",
+      "type": "integer",
+      "unit": "days",
+      "min": 0,
+      "max": 3650
     }
-
-    if(def.type==="string"){
-      if(!def.enum.includes(r.value)) return {status:"REJECTED", reason:"ENUM FAIL"};
-    }
-
-    return {status:"ACCEPTED", module:def.module, record:r};
-  });
-}
-
-/* =========================
-   NOAA FETCH (SAFE + FALLBACK)
-========================= */
-async function fetchNOAA(){
-  try{
-    const res = await fetch("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature&application=groan&date=latest&station=8720218&time_zone=gmt&units=metric&format=json");
-    const data = await res.json();
-
-    const temp = parseFloat(data.data[0].v);
-
-    if(isNaN(temp)) throw new Error("Invalid NOAA");
-
-    return temp;
-
-  }catch(e){
-    return 29.9; // SAFE FALLBACK
   }
 }
-
-/* =========================
-   DTI CONVERSION
-========================= */
-function convertToDTI(temp){
-
-  let outcome="stable";
-  if(temp > 30) outcome="stress";
-  if(temp > 32) outcome="critical";
-
-  const time = new Date().toISOString();
-
-  return [
-    {dti:"WATER_TEMP_C", value:temp, time},
-    {dti:"OUTCOME_SIGNAL", value:outcome, time}
-  ];
-}
-
-/* =========================
-   ENGINE CORE
-========================= */
-function runEngine(validated){
-
-  let status="OK";
-
-  validated.forEach(v=>{
-    if(v.status==="ACCEPTED" && v.record.dti==="OUTCOME_SIGNAL"){
-      if(v.record.value==="critical") status="CRITICAL";
-      else if(v.record.value==="stress" && status!=="CRITICAL"){
-        status="STRESS";
-      }
-    }
-  });
-
-  return {status};
-}
-
-/* =========================
-   RENDER (DTI ALWAYS VISIBLE)
-========================= */
-function render(o){
-
-  const dtiList = o.dtis.map(d=>d.dti).join(", ");
-
-  // FORCE VISIBLE DTI
-  document.getElementById("dti").innerText =
-    "DTI: " + dtiList;
-
-  // FULL OUTPUT
-  document.getElementById("output").textContent =
-`TEMP: ${o.temp}
-
-ENGINE: ${o.engine.status}
-
----------------------
-
-FULL DATA:
-${JSON.stringify(o,null,2)}
-`;
-}
-
-/* =========================
-   FULL PIPELINE
-========================= */
-async function runSystem(source, manual=null){
-
-  let temp;
-
-  if(source==="NOAA"){
-    temp = await fetchNOAA();
-  } else {
-    temp = parseFloat(manual);
-  }
-
-  if(isNaN(temp)) temp = 29.9;
-
-  const dtis = convertToDTI(temp);
-  const validated = ingest(dtis);
-  const engine = runEngine(validated);
-
-  render({temp, dtis, validated, engine});
-}
-
-/* =========================
-   BUTTON HANDLERS
-========================= */
-function runNOAA(){ runSystem("NOAA"); }
-
-function runManual(){
-  const val = document.getElementById("manualTemp").value;
-  runSystem("MANUAL", val);
-}
-
-</script>
-
-</body>
-</html>
