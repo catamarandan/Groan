@@ -7,7 +7,7 @@
 
 <body>
 
-<h2>GROAN UNIFIED (DTI VISIBLE)</h2>
+<h2>GROAN UNIFIED</h2>
 
 <button onclick="runNOAA()">Run NOAA</button>
 <input id="manualTemp" placeholder="Manual °C">
@@ -46,7 +46,7 @@ async function fetchNOAA(){
     const data = await res.json();
     return parseFloat(data.data[0].v);
   }catch(e){
-    return 29.9; // HARD FALLBACK (guarantees DTI)
+    return 29.9; // guaranteed fallback
   }
 }
 
@@ -77,10 +77,28 @@ function runEngine(validated){
 }
 
 function render(o){
-  document.getElementById("output").textContent = JSON.stringify(o,null,2);
+
+  let dtiList = "NONE";
+
+  if (o.dtis && o.dtis.length){
+    dtiList = o.dtis.map(d => d.dti).join(", ");
+  }
+
+  document.getElementById("output").textContent =
+`DTI: ${dtiList}
+
+TEMP: ${o.temp}
+
+ENGINE: ${o.engine.status}
+
+----------------------
+
+${JSON.stringify(o,null,2)}
+`;
 }
 
 async function runSystem(source,manual=null){
+
   let temp;
 
   if(source==="NOAA"){
@@ -97,6 +115,7 @@ async function runSystem(source,manual=null){
 }
 
 function runNOAA(){ runSystem("NOAA"); }
+
 function runManual(){
   const val = document.getElementById("manualTemp").value;
   runSystem("MANUAL",val);
