@@ -188,29 +188,23 @@
   </div>
 </div>
 
-requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
-}
-</script>   <!-- ✅ CLOSE YOUR MAIN SCRIPT -->
+<script>
 
-<script type="module">
-  console.log("GROAN TEST SCRIPT LOADED");
-
-  import { loadDTI, ingest } from './js/groan_ingest_v1.js';
-
-  await loadDTI();
-
-  const ok = {
-    site_id: "TEST_001",
-    time: "2026-04-15T12:00:00Z",
-    dti: "REEF_BLEACHING_PCT",
-    value: 35
-  };
-
-  console.log("TEST RESULT:", ingest(ok));
-</script>
-
-</body>
-</html>
+  // ── PRESETS ──────────────────────────────────────────────────────────────────
+  function applyPreset() {
+    const p = document.getElementById('preset').value;
+    const vals = {
+      healthy: {t:26, o:4.0, n:1, s:1, l:9},
+      critical: {t:32, o:2.2, n:8, s:7, l:3},
+      custom:   {t:28, o:3.5, n:3, s:2, l:8}
+    }[p];
+    if (!vals) return;
+    document.getElementById('temp').value      = vals.t;
+    document.getElementById('omega').value     = vals.o;
+    document.getElementById('nutrients').value = vals.n;
+    document.getElementById('sediment').value  = vals.s;
+    document.getElementById('light').value     = vals.l;
+  }
 
   // ── SINGLE-POINT NOAA (Task 3) ───────────────────────────────────────────────
   async function fetchNOAA(btn) {
@@ -587,14 +581,14 @@ requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
     // Task 5 — draw chart (defer until browser has laid out canvas dimensions)
     requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
   }
+</script>
+
 <script type="module">
   console.log("GROAN TEST SCRIPT LOADED");
 
   import { loadDTI, ingest } from './js/groan_ingest_v1.js';
 
   await loadDTI();
-
-  console.log("DTI AFTER LOAD:", DTI_REGISTRY);
 
   const ok = {
     site_id: "TEST_001",
@@ -607,4 +601,5 @@ requestAnimationFrame(() => drawTrajectoryChart(trajectory, status));
 </script>
 </body>
 </html>
+
 
