@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GROAN NOAA Multi-DTI Ingestion</title>
+<title>GROAN NOAA Multi-DTI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { font-family: system-ui; background:#f4f7fb; padding:20px; }
-  .box { background:#fff; border:1px solid #d7deea; border-radius:12px; padding:16px; margin-bottom:12px; }
+  body { font-family: system-ui; padding:20px; background:#f4f7fb; }
+  .box { background:#fff; padding:16px; border-radius:10px; margin-bottom:12px; border:1px solid #d7deea; }
   button { padding:10px 14px; font-weight:700; cursor:pointer; }
   pre { background:#eef3f8; padding:10px; border-radius:8px; }
 </style>
@@ -14,14 +14,13 @@
 
 <body>
 
-<h2>GROAN — NOAA Multi-DTI Test</h2>
+<h2>GROAN NOAA Multi-DTI Test</h2>
 
 <div class="box">
-  <button onclick="run()">Run Multi-DTI Ingestion</button>
+  <button id="runBtn">Run Multi-DTI Ingestion</button>
 </div>
 
 <div class="box">
-  <h3>Output</h3>
   <pre id="out">Waiting...</pre>
 </div>
 
@@ -33,7 +32,6 @@ await loadDTI();
 
 async function fetchNOAA() {
   const url = "https://marine-api.open-meteo.com/v1/marine?latitude=9.35&longitude=-82.25&hourly=sea_surface_temperature";
-
   const res = await fetch(url);
   const data = await res.json();
 
@@ -44,7 +42,6 @@ async function fetchNOAA() {
 }
 
 function deriveDTIs(tempC) {
-
   return [
     {
       site_id: "Bocas_Test",
@@ -52,7 +49,6 @@ function deriveDTIs(tempC) {
       dti: "WATER_TEMP_C",
       value: tempC
     },
-
     {
       site_id: "Bocas_Test",
       time: new Date().toISOString(),
@@ -62,21 +58,17 @@ function deriveDTIs(tempC) {
   ];
 }
 
-window.run = async function () {
+document.getElementById("runBtn").addEventListener("click", async () => {
 
   const out = document.getElementById("out");
 
   try {
-
     const temp = await fetchNOAA();
-
     const records = deriveDTIs(temp);
-
     const results = records.map(r => ingest(r));
 
     out.innerText = JSON.stringify({
       tempC: temp,
-      records,
       results
     }, null, 2);
 
@@ -84,7 +76,7 @@ window.run = async function () {
     out.innerText = "ERROR: " + e;
   }
 
-};
+});
 
 </script>
 
