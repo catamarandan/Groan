@@ -1,18 +1,29 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "updated": "2026-05-01",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN™ — Global Reef & Ocean Analytics Network",
-  "notes": "v1.2 — Added Source_003 DTIs (DHW, BAA, SST_ANOMALY) and Source_004 DTI (CHLOROPHYLL_A). All environmental satellite sources now registered. Source_001 dataset corrected to NOAA_DHW (CoralTemp). Source_001/003 share single ERDDAP API call.",
-
-  "modules": ["GRIN", "GSIN", "GMIN", "GKIN", "CMIE", "DMAP-CAL™", "MOOP"],
-
+  "notes": "v1.3 — Added Source_005 (Copernicus Marine) DTIs: SALINITY_PSU, CURRENT_SPEED_MS, CURRENT_DIR_DEG, MIXED_LAYER_DEPTH_M, SUBSURFACE_TEMP_DELTA_C.",
+  "modules": [
+    "GRIN",
+    "GSIN",
+    "GMIN",
+    "GKIN",
+    "CMIE",
+    "DMAP-CAL™",
+    "MOOP"
+  ],
   "source_registry": {
     "Source_001": {
       "name": "NOAA CoralTemp",
       "dataset": "NOAA_DHW",
       "baseUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
-      "variables": ["CRW_SST", "CRW_DHW", "CRW_BAA", "CRW_SSTANOMALY"],
+      "variables": [
+        "CRW_SST",
+        "CRW_DHW",
+        "CRW_BAA",
+        "CRW_SSTANOMALY"
+      ],
       "resolution_km": 5,
       "update_frequency": "daily",
       "note": "Single ERDDAP call returns SST + DHW + BAA simultaneously. Shared by Source_001 and Source_003."
@@ -21,7 +32,9 @@
       "name": "NOAA WaveWatch III",
       "dataset": "WW3_GLOBAL",
       "baseUrl": "https://nomads.ncep.noaa.gov/cgi-bin/filter_wave_global.pl",
-      "variables": ["HTSGW_surface"],
+      "variables": [
+        "HTSGW_surface"
+      ],
       "resolution_km": 16,
       "update_frequency": "6-hourly"
     },
@@ -29,7 +42,11 @@
       "name": "NOAA CRW — DHW + BAA",
       "dataset": "NOAA_DHW",
       "baseUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
-      "variables": ["CRW_DHW", "CRW_BAA", "CRW_SSTANOMALY"],
+      "variables": [
+        "CRW_DHW",
+        "CRW_BAA",
+        "CRW_SSTANOMALY"
+      ],
       "resolution_km": 5,
       "update_frequency": "daily",
       "note": "Shares ERDDAP call with Source_001. No additional API request required."
@@ -38,18 +55,36 @@
       "name": "NASA OceanColor — Chlorophyll-a",
       "dataset": "MODISA_L3m_CHL",
       "baseUrl": "https://oceandata.sci.gsfc.nasa.gov",
-      "variables": ["chlor_a"],
+      "variables": [
+        "chlor_a"
+      ],
       "resolution_km": 4,
       "preferred_composite": "8D",
       "update_frequency": "daily (8-day composite preferred)",
       "auth_required": true,
       "auth_env_var": "NASA_EARTHDATA_TOKEN",
       "note": "log10 transform required before normalization. 8-day composite preferred over daily to reduce cloud-gap noise."
+    },
+    "Source_005": {
+      "name": "Copernicus Marine — Global Physics Analysis and Forecast",
+      "dataset": "GLOBAL_ANALYSISFORECAST_PHY_001_024",
+      "baseUrl": "https://nrt.cmems-du.eu/thredds/dodsC/cmems_mod_glo_phy-all_anfc_0.083deg_P1D-m",
+      "variables": [
+        "so",
+        "uo",
+        "vo",
+        "mlotst",
+        "thetao"
+      ],
+      "resolution_km": 8,
+      "update_frequency": "daily NRT",
+      "auth_required": true,
+      "auth_method": "Basic (username:password)",
+      "registration_url": "https://marine.copernicus.eu",
+      "note": "Current speed/direction derived from U+V components. Subsurface temp at ~50m for thermal refuge assessment."
     }
   },
-
   "DTIs": {
-
     "CORAL_COVER_PCT": {
       "module": "GRIN",
       "type": "float",
@@ -101,13 +136,26 @@
     "REEF_CORAL_CONDITION": {
       "module": "GRIN",
       "type": "enum",
-      "values": ["healthy", "pale", "partial_bleach", "full_bleach", "recovering", "diseased", "dead"],
+      "values": [
+        "healthy",
+        "pale",
+        "partial_bleach",
+        "full_bleach",
+        "recovering",
+        "diseased",
+        "dead"
+      ],
       "description": "Dominant coral condition state at survey site"
     },
     "SUCCESSION_STAGE": {
       "module": "GRIN",
       "type": "enum",
-      "values": ["pioneer", "transitional", "climax", "arrested"],
+      "values": [
+        "pioneer",
+        "transitional",
+        "climax",
+        "arrested"
+      ],
       "description": "Ecological succession stage — recovery index input to DMAP-CAL™"
     },
     "PAM_FV_FM": {
@@ -166,7 +214,6 @@
       "max": 100,
       "description": "Total algae-coral contact margin length per transect — allelopathy zone proxy"
     },
-
     "SEAGRASS_COVER_PCT": {
       "module": "GSIN",
       "type": "float",
@@ -191,7 +238,6 @@
       "max": 1,
       "description": "Biological pump efficiency proxy — sediment darkness, rhizome intact, no bioturbation"
     },
-
     "MANGROVE_CANOPY_INDEX": {
       "module": "GMIN",
       "type": "float",
@@ -216,7 +262,6 @@
       "max": 1,
       "description": "Estimated DOC export capacity to adjacent seagrass/reef — derived from canopy area"
     },
-
     "WATER_TEMP_C": {
       "module": "GKIN",
       "type": "float",
@@ -248,9 +293,9 @@
       "variable_key": "CRW_DHW",
       "normalize_fn": "dhwNormalize",
       "thresholds": {
-        "watch"   : 4,
-        "alert_1" : 8,
-        "alert_2" : 12
+        "watch": 4,
+        "alert_1": 8,
+        "alert_2": 12
       },
       "description": "Degree Heating Weeks — primary bleaching predictor. Piecewise normalized: 0=10, 4=7, 8=4, 12=1, >12=0. Highest single-variable CMIE weight."
     },
@@ -291,22 +336,22 @@
       "transform": "log10",
       "normalize_range": {
         "log_min": -2.0,
-        "log_max": 0.30,
+        "log_max": 0.3,
         "note": "log10(0.01)=-2.0 maps to score 10; log10(2.0)=0.30 maps to score 0"
       },
       "preferred_composite": "8D",
       "thresholds": {
-        "ultra_oligotrophic" : 0.02,
-        "oligotrophic_upper" : 0.1,
-        "elevated"           : 0.5,
-        "eutrophic_stress"   : 1.0,
-        "severe_eutrophic"   : 2.0
+        "ultra_oligotrophic": 0.02,
+        "oligotrophic_upper": 0.1,
+        "elevated": 0.5,
+        "eutrophic_stress": 1.0,
+        "severe_eutrophic": 2.0
       },
       "theater_weights": {
-        "MAR"            : 1.1,
-        "GBR"            : 1.2,
-        "RED_SEA"        : 0.9,
-        "CORAL_TRIANGLE" : 1.0
+        "MAR": 1.1,
+        "GBR": 1.2,
+        "RED_SEA": 0.9,
+        "CORAL_TRIANGLE": 1.0
       },
       "description": "Surface chlorophyll-a concentration — primary proxy for nutrient/pollution loading. log10 transform required. Low Chl-a = clear oligotrophic water (reef-favorable). Direction: negative (higher=lower score). NASA Earthdata auth required."
     },
@@ -393,30 +438,48 @@
       "max": 20,
       "description": "Dissolved oxygen from CTD profile"
     },
-
     "TIDAL_PHASE_COMPLIANCE": {
       "module": "MOOP",
       "type": "enum",
-      "values": ["compliant", "non_compliant", "flagged_resurvey"],
+      "values": [
+        "compliant",
+        "non_compliant",
+        "flagged_resurvey"
+      ],
       "description": "Survey tidal phase vs. circuit 1 anchor (±1hr). Non-compliant data cannot enter longitudinal cover trend."
     },
     "IMAGE_CONFIDENCE_TIER": {
       "module": "MOOP",
       "type": "enum",
-      "values": ["high", "moderate", "low"],
+      "values": [
+        "high",
+        "moderate",
+        "low"
+      ],
       "description": "GSIN image confidence tier assigned at ingestion. High>85%, Moderate 60-85%, Low<60%."
     },
     "OBSERVER_PAIR_CALIBRATED": {
       "module": "MOOP",
       "type": "enum",
-      "values": ["certified", "provisional", "failed"],
+      "values": [
+        "certified",
+        "provisional",
+        "failed"
+      ],
       "description": "Observer pair calibration status from Banco Chinchorro standard transect. Uncertified data not accepted into pipeline."
     },
-
     "CMIE_CASCADE_FLAG": {
       "module": "CMIE",
       "type": "enum",
-      "values": ["none", "trophic_cascade", "lbsp_upstream", "thermal_pre_bleach", "sctld_compound", "phase_shift_proximity", "compounding_pulse"],
+      "values": [
+        "none",
+        "trophic_cascade",
+        "lbsp_upstream",
+        "thermal_pre_bleach",
+        "sctld_compound",
+        "phase_shift_proximity",
+        "compounding_pulse"
+      ],
       "description": "Cross-module interaction signal type. Multiple flags allowed per site per circuit."
     },
     "CMIE_PHASE_SHIFT_PROXIMITY": {
@@ -446,16 +509,26 @@
     "COVER_TRAJECTORY": {
       "module": "CMIE",
       "type": "enum",
-      "values": ["recovering", "stable", "declining", "accelerating_decline", "insufficient_data"],
+      "values": [
+        "recovering",
+        "stable",
+        "declining",
+        "accelerating_decline",
+        "insufficient_data"
+      ],
       "description": "Multi-circuit coral cover trajectory. Requires ≥2 circuits. Overrides status-only DS for routing."
     },
     "OUTCOME_SIGNAL": {
       "module": "CMIE",
       "type": "enum",
-      "values": ["improved", "stable", "declined", "critical"],
+      "values": [
+        "improved",
+        "stable",
+        "declined",
+        "critical"
+      ],
       "description": "Circuit-over-circuit outcome classification from CMIE"
     },
-
     "DS_SCORE": {
       "module": "DMAP-CAL™",
       "type": "float",
@@ -508,8 +581,105 @@
       "min": 0,
       "max": 3650,
       "description": "Expected time to measurable outcome from intervention initiation"
+    },
+    "SALINITY_PSU": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "PSU",
+      "min": 20,
+      "max": 45,
+      "source": "Source_005",
+      "variable_key": "so",
+      "normalize_fn": "salinityNormalize",
+      "normalize_type": "parabolic",
+      "optimal": 35.0,
+      "stress_low": 30.0,
+      "stress_high": 40.0,
+      "description": "Sea surface salinity. Parabolic normalization — optimal near 35 PSU, stress at both low (<30, freshwater intrusion) and high (>40, hypersaline) extremes."
+    },
+    "CURRENT_SPEED_MS": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "m/s",
+      "min": 0,
+      "max": 3.0,
+      "source": "Source_005",
+      "variable_keys": {
+        "U": "uo",
+        "V": "vo"
+      },
+      "normalize_fn": "currentSpeedNormalize",
+      "normalize_type": "parabolic",
+      "optimal_range": [
+        0.05,
+        0.3
+      ],
+      "stress_high": 0.8,
+      "theater_weights": {
+        "MAR": 1.0,
+        "GBR": 1.1,
+        "RED_SEA": 1.2,
+        "CORAL_TRIANGLE": 1.0
+      },
+      "description": "Surface current speed derived from U+V components. Parabolic: moderate current (0.05-0.30 m/s) = optimal reef flushing. Too slow = stagnant. Too fast = mechanical stress."
+    },
+    "CURRENT_DIR_DEG": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "degrees",
+      "min": 0,
+      "max": 360,
+      "source": "Source_005",
+      "variable_keys": {
+        "U": "uo",
+        "V": "vo"
+      },
+      "normalize_fn": "none",
+      "description": "Surface current direction (degrees from North). Used for reef aspect/exposure calculation in CMIE — not independently normalized. Combined with site aspect data."
+    },
+    "MIXED_LAYER_DEPTH_M": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "meters",
+      "min": 0,
+      "max": 200,
+      "source": "Source_005",
+      "variable_key": "mlotst",
+      "normalize_fn": "mldNormalize",
+      "normalize_type": "positive",
+      "thresholds": {
+        "critically_shallow": 10,
+        "shallow_bleaching_risk": 15,
+        "deep_refuge": 80
+      },
+      "theater_weights": {
+        "MAR": 1.0,
+        "GBR": 1.1,
+        "RED_SEA": 1.2,
+        "CORAL_TRIANGLE": 1.0
+      },
+      "description": "Ocean mixed layer depth. Deeper MLD = greater thermal buffering = higher score. Shallow MLD during thermal stress amplifies bleaching risk. RED_SEA elevated — stratification is acute bleaching amplifier in Red Sea basin."
+    },
+    "SUBSURFACE_TEMP_DELTA_C": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "degrees C delta",
+      "min": -10,
+      "max": 10,
+      "source": "Source_005",
+      "variable_key": "thetao",
+      "reference_depth_m": 50,
+      "normalize_fn": "subSurfTempDeltaNormalize",
+      "normalize_type": "negative_delta",
+      "requires": "Source_001 SST (WATER_TEMP_C) for delta calculation",
+      "thresholds": {
+        "strong_refuge": -3.0,
+        "moderate_refuge": -1.5,
+        "no_refuge": 0.0,
+        "full_column_stress": 1.5
+      },
+      "description": "Subsurface temperature at ~50m assessed as delta vs. SST (Source_001). Negative delta = cooler subsurface = thermal refuge potential. Score 10 at -3 C delta, score 5 at 0, score 0 at +3 C delta."
     }
   }
 }
-
 
