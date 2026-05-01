@@ -1,11 +1,52 @@
 {
-  "version": "1.1",
-  "updated": "2026-04-15",
+  "version": "1.2",
+  "updated": "2026-05-01",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN™ — Global Reef & Ocean Analytics Network",
-  "notes": "v1.1 — removed GMAIN (not a GROAN module); physical/env DTIs routed to GKIN; interventions to DMAP-CAL™; outcomes to CMIE. Added 14 missing DTIs per GROAN spec.",
+  "notes": "v1.2 — Added Source_003 DTIs (DHW, BAA, SST_ANOMALY) and Source_004 DTI (CHLOROPHYLL_A). All environmental satellite sources now registered. Source_001 dataset corrected to NOAA_DHW (CoralTemp). Source_001/003 share single ERDDAP API call.",
 
   "modules": ["GRIN", "GSIN", "GMIN", "GKIN", "CMIE", "DMAP-CAL™", "MOOP"],
+
+  "source_registry": {
+    "Source_001": {
+      "name": "NOAA CoralTemp",
+      "dataset": "NOAA_DHW",
+      "baseUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
+      "variables": ["CRW_SST", "CRW_DHW", "CRW_BAA", "CRW_SSTANOMALY"],
+      "resolution_km": 5,
+      "update_frequency": "daily",
+      "note": "Single ERDDAP call returns SST + DHW + BAA simultaneously. Shared by Source_001 and Source_003."
+    },
+    "Source_002": {
+      "name": "NOAA WaveWatch III",
+      "dataset": "WW3_GLOBAL",
+      "baseUrl": "https://nomads.ncep.noaa.gov/cgi-bin/filter_wave_global.pl",
+      "variables": ["HTSGW_surface"],
+      "resolution_km": 16,
+      "update_frequency": "6-hourly"
+    },
+    "Source_003": {
+      "name": "NOAA CRW — DHW + BAA",
+      "dataset": "NOAA_DHW",
+      "baseUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
+      "variables": ["CRW_DHW", "CRW_BAA", "CRW_SSTANOMALY"],
+      "resolution_km": 5,
+      "update_frequency": "daily",
+      "note": "Shares ERDDAP call with Source_001. No additional API request required."
+    },
+    "Source_004": {
+      "name": "NASA OceanColor — Chlorophyll-a",
+      "dataset": "MODISA_L3m_CHL",
+      "baseUrl": "https://oceandata.sci.gsfc.nasa.gov",
+      "variables": ["chlor_a"],
+      "resolution_km": 4,
+      "preferred_composite": "8D",
+      "update_frequency": "daily (8-day composite preferred)",
+      "auth_required": true,
+      "auth_env_var": "NASA_EARTHDATA_TOKEN",
+      "note": "log10 transform required before normalization. 8-day composite preferred over daily to reduce cloud-gap noise."
+    }
+  },
 
   "DTIs": {
 
@@ -183,7 +224,9 @@
       "min": -2,
       "max": 40,
       "source": "Source_001",
-      "description": "Absolute sea surface or water column temperature"
+      "variable_key": "CRW_SST",
+      "normalize_fn": "sstNormalize",
+      "description": "Sea surface temperature from NOAA CoralTemp. Normalized: 24°C=10, 30°C=0 (inverted — hotter=lower score)."
     },
     "WATER_TEMP_ANOMALY_C": {
       "module": "GKIN",
@@ -192,7 +235,80 @@
       "min": -10,
       "max": 10,
       "source": "Source_001",
-      "description": "SST anomaly vs. site MMM (Maximum Monthly Mean) baseline. >+1°C for >4 weeks triggers Sverdrup NPP flag."
+      "variable_key": "CRW_SSTANOMALY",
+      "description": "SST anomaly vs. site MMM baseline. >+1°C for >4 weeks triggers Sverdrup NPP flag."
+    },
+    "DHW_DEGREE_HEATING_WEEKS": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "°C-weeks",
+      "min": 0,
+      "max": 30,
+      "source": "Source_003",
+      "variable_key": "CRW_DHW",
+      "normalize_fn": "dhwNormalize",
+      "thresholds": {
+        "watch"   : 4,
+        "alert_1" : 8,
+        "alert_2" : 12
+      },
+      "description": "Degree Heating Weeks — primary bleaching predictor. Piecewise normalized: 0=10, 4=7, 8=4, 12=1, >12=0. Highest single-variable CMIE weight."
+    },
+    "BAA_BLEACHING_ALERT_AREA": {
+      "module": "GKIN",
+      "type": "integer",
+      "unit": "categorical",
+      "min": 0,
+      "max": 4,
+      "source": "Source_003",
+      "variable_key": "CRW_BAA",
+      "normalize_fn": "baaNormalize",
+      "values": {
+        "0": "No Thermal Stress",
+        "1": "Bleaching Watch",
+        "2": "Bleaching Warning",
+        "3": "Bleaching Alert Level 1",
+        "4": "Bleaching Alert Level 2"
+      },
+      "normalized_scores": {
+        "0": 10.0,
+        "1": 7.0,
+        "2": 5.0,
+        "3": 2.5,
+        "4": 0.0
+      },
+      "description": "NOAA CRW Bleaching Alert Area categorical product. Feeds GROAN alert dashboard tier. Retrieved in same ERDDAP call as DHW."
+    },
+    "CHLOROPHYLL_A_MGL": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "mg/m³",
+      "min": 0.001,
+      "max": 10,
+      "source": "Source_004",
+      "variable_key": "chlor_a",
+      "normalize_fn": "chlorophyllNormalize",
+      "transform": "log10",
+      "normalize_range": {
+        "log_min": -2.0,
+        "log_max": 0.30,
+        "note": "log10(0.01)=-2.0 maps to score 10; log10(2.0)=0.30 maps to score 0"
+      },
+      "preferred_composite": "8D",
+      "thresholds": {
+        "ultra_oligotrophic" : 0.02,
+        "oligotrophic_upper" : 0.1,
+        "elevated"           : 0.5,
+        "eutrophic_stress"   : 1.0,
+        "severe_eutrophic"   : 2.0
+      },
+      "theater_weights": {
+        "MAR"            : 1.1,
+        "GBR"            : 1.2,
+        "RED_SEA"        : 0.9,
+        "CORAL_TRIANGLE" : 1.0
+      },
+      "description": "Surface chlorophyll-a concentration — primary proxy for nutrient/pollution loading. log10 transform required. Low Chl-a = clear oligotrophic water (reef-favorable). Direction: negative (higher=lower score). NASA Earthdata auth required."
     },
     "OMEGA_ARAGONITE": {
       "module": "GKIN",
@@ -257,6 +373,8 @@
       "min": 0,
       "max": 20,
       "source": "Source_002",
+      "variable_key": "HTSGW_surface",
+      "normalize_fn": "waveNormalize",
       "description": "Significant wave height (Hs) — Source 002. Visual Beaufort estimate or instrument."
     },
     "THERMOCLINE_DEPTH_M": {
@@ -275,6 +393,7 @@
       "max": 20,
       "description": "Dissolved oxygen from CTD profile"
     },
+
     "TIDAL_PHASE_COMPLIANCE": {
       "module": "MOOP",
       "type": "enum",
@@ -392,4 +511,5 @@
     }
   }
 }
+
 
