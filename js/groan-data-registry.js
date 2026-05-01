@@ -102,6 +102,26 @@ GROAN.registry.L1 = {
     authEnvVar        : "NASA_EARTHDATA_TOKEN",
     theaters          : ["MAR","GBR","RED_SEA","CORAL_TRIANGLE"],
     note              : "log10 transform required before normalization. 8-day composite preferred."
+  },
+
+  "005": {
+    sourceId        : "005",
+    name            : "Copernicus Marine — Global Physics",
+    description     : "Salinity, surface currents, mixed layer depth, subsurface temperature",
+    variable        : "COPERNICUS_PHY",
+    nativeUnit      : "PSU / m/s / m / degrees C",
+    provider        : "EU Copernicus Marine Service",
+    baseUrl         : "https://nrt.cmems-du.eu/thredds/dodsC/cmems_mod_glo_phy-all_anfc_0.083deg_P1D-m",
+    dataset         : "GLOBAL_ANALYSISFORECAST_PHY_001_024",
+    variableKeys    : { salinity:"so", currentU:"uo", currentV:"vo", mld:"mlotst", tempSubsurf:"thetao" },
+    updateFrequency : "daily NRT",
+    latencyHours    : 24,
+    spatialResKm    : 8,
+    authRequired    : true,
+    authMethod      : "Basic (username:password)",
+    registrationUrl : "https://marine.copernicus.eu",
+    theaters        : ["MAR","GBR","RED_SEA","CORAL_TRIANGLE"],
+    note            : "Current speed/direction computed from U+V components. Subsurface temp assessed as delta vs SST from Source_001."
   }
 
 };
@@ -255,6 +275,23 @@ GROAN.registry.resolveConflict = function (outputs) {
     if (!wStale && cStale) return winner;
     return (wCfg.conflictPriority||99) <= (cCfg.conflictPriority||99) ? winner : challenger;
   });
+};
+
+// Source 005 normalize functions delegate to copernicus-ingestion.js
+// Registered here for registry completeness
+GROAN.registry.normalize.salinity = function(v,t,l,th){ return GROAN.data.copernicus.normalize.salinity(v,t,l,th); };
+GROAN.registry.normalize.currentSpeed = function(v,t,l,th){ return GROAN.data.copernicus.normalize.currentSpeed(v,t,l,th); };
+GROAN.registry.normalize.mld = function(v,t,l,th){ return GROAN.data.copernicus.normalize.mld(v,t,l,th); };
+GROAN.registry.normalize.subSurfTempDelta = function(s,sst,t,l,th){ return GROAN.data.copernicus.normalize.subSurfTempDelta(s,sst,t,l,th); };
+
+// L3 — Source 005 arbitration
+GROAN.registry.L3["005"] = {
+  sourceId:"005", variables:["SALINITY_PSU","CURRENT_SPEED_MS","MIXED_LAYER_DEPTH_M","SUBSURFACE_TEMP_DELTA_C"],
+  conflictGroup:"WATER_COLUMN_PHYSICS", conflictPriority:1,
+  defaultWeight:{ salinity:0.10, current:0.08, mld:0.12, subSurf:0.10 },
+  recencyWeight:0.85, staleThresholdHours:36,
+  theaterMultipliers:{ MAR:1.0, GBR:1.1, RED_SEA:1.2, CORAL_TRIANGLE:1.0 },
+  note:"RED_SEA elevated — thermal stratification and MLD are acute bleaching amplifiers in Red Sea basin."
 };
 
 GROAN.registry.sources = Object.keys(GROAN.registry.L1);
