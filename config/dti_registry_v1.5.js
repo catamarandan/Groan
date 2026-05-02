@@ -1,9 +1,9 @@
 {
-  "version": "1.5",
+  "version": "1.6",
   "updated": "2026-05-01",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN\u2122 \u2014 Global Reef & Ocean Analytics Network",
-  "notes": "v1.5 \u2014 Added Source_007 (NOAA CRW Virtual Stations) DTIs: VS_DHW_90PCT, VS_BAA_7D_MAX.",
+  "notes": "v1.6 \u2014 Added Source_008 (Global Fishing Watch) DTI: FPI (Fishing Pressure Index).",
   "modules": [
     "GRIN",
     "GSIN",
@@ -129,6 +129,24 @@
       "auth_required": false,
       "data_format": "ASCII text (.txt)",
       "note": "90th-percentile DHW/BAA across reef pixels in jurisdiction. Complements Sources 001/003 (point-level). CMIE uses delta between point and jurisdiction to classify systemic vs. isolated stress."
+    },
+    "Source_008": {
+      "name": "Global Fishing Watch",
+      "dataset": "public-global-fishing-effort:v3.0",
+      "baseUrl": "https://gateway.api.globalfishingwatch.org/v3/4wings/report",
+      "variables": [
+        "apparent_fishing_hours"
+      ],
+      "resolution": "LOW (0.1\u00b0) / MEDIUM (0.01\u00b0) / HIGH (0.001\u00b0) \u2014 configurable",
+      "update_frequency": "Daily NRT (~72hr lag)",
+      "time_series_start": "2017",
+      "auth_required": true,
+      "auth_method": "Bearer token (free API key)",
+      "api_key_registration": "https://globalfishingwatch.org/our-apis/",
+      "api_key_var": "window.GROAN.config.GFW_API_KEY",
+      "rate_limit": "50,000 requests/day",
+      "caveat": "AIS vessels only (~70,000). Non-AIS artisanal fishing not detected. May overestimate reef health in high small-boat fishing regions (coastal Honduras, Nicaragua, Guatemala).",
+      "note": "Default AOI: \u00b10.5\u00b0 bounding box (~55km) around waypoint. Default period: 30 days. Total fishing hours summed across AOI cells, log10-normalized to FPI."
     }
   },
   "DTIs": {
@@ -848,6 +866,47 @@
       "note": "Jurisdiction 7-day max BAA. Same categorical rubric as BAA_BLEACHING_ALERT_AREA (Source_003). Represents worst stress level reached across the reef jurisdiction in the past 7 days.",
       "cmie_delta_partner": "BAA_BLEACHING_ALERT_AREA",
       "description": "NOAA CRW Virtual Station 7-day maximum Bleaching Alert Area \u2014 jurisdiction-level. Derived from 90th percentile HotSpot/DHW pair across all reef pixels in station boundary. Complements point-level BAA from Source_003."
+    },
+    "FPI": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "0\u201310 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_008",
+      "variable_key": "apparent_fishing_hours",
+      "normalize_fn": "normalizeFPI",
+      "normalize_type": "log10_linear_negative",
+      "direction": "NEGATIVE",
+      "direction_note": "Higher FPI = less fishing pressure = better reef condition. No inversion needed \u2014 low score means high pressure.",
+      "formula": "FPI = 10 \u00d7 (1 \u2212 (log10(totalHours) \u2212 LOG_MIN) / (LOG_MAX \u2212 LOG_MIN))",
+      "normalization_params": {
+        "LOG_MIN": -1.0,
+        "LOG_MAX": 4.0,
+        "zero_hours": "FPI = 10.0 (no AIS fishing detected)",
+        "reference_aoi": "\u00b10.5\u00b0 bounding box (~55km radius, ~9,500 km\u00b2)",
+        "reference_period": "30 days"
+      },
+      "tier_labels": {
+        "PRISTINE": "FPI \u2265 9.0 \u2014 <0.1 total hours, virtually no AIS fishing",
+        "LOW_PRESSURE": "FPI 7.5\u20139.0 \u2014 0.1\u201310 total hours, light/occasional",
+        "MODERATE_PRESSURE": "FPI 5.5\u20137.5 \u2014 10\u2013500 hours, typical Caribbean reef",
+        "HIGH_PRESSURE": "FPI 3.0\u20135.5 \u2014 500\u20135,000 hours, heavy pressure",
+        "SEVERE_PRESSURE": "FPI < 3.0 \u2014 >5,000 hours, severely exploited"
+      },
+      "cmie_integration": {
+        "primary_flag": "TROPHIC_CASCADE_RISK",
+        "trigger": "FPI < 5.0 AND APEX_PREDATOR_INDEX < 0.3",
+        "secondary_flag": "PHASE_SHIFT_FISHING_DRIVER",
+        "trigger_2": "FPI < 3.0 AND HERBIVORE_BIOMASS_KG_HA < 200",
+        "grin_partners": [
+          "APEX_PREDATOR_INDEX",
+          "HERBIVORE_BIOMASS_KG_HA",
+          "LIONFISH_DENSITY_100M2"
+        ]
+      },
+      "caveat": "AIS vessels only. Non-AIS artisanal fishing not captured. FPI may overestimate health in coastal small-boat fishing regions.",
+      "description": "Fishing Pressure Index \u2014 apparent fishing effort (hours) within \u00b10.5\u00b0 AOI over 30-day window, log10-normalized to 0\u201310. Feeds DMAP-CAL\u2122 Tier 2 (fisheries stressor) and CMIE trophic cascade module."
     }
   }
 }
