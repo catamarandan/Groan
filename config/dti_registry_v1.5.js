@@ -1,16 +1,16 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "updated": "2026-05-01",
   "owner": "Nevado Ranch Camp LLC",
-  "system": "GROAN™ — Global Reef & Ocean Analytics Network",
-  "notes": "v1.4 — Added Source_006 (Allen Coral Atlas) and DTI: RSI (Reef Structural Integrity Index).",
+  "system": "GROAN\u2122 \u2014 Global Reef & Ocean Analytics Network",
+  "notes": "v1.5 \u2014 Added Source_007 (NOAA CRW Virtual Stations) DTIs: VS_DHW_90PCT, VS_BAA_7D_MAX.",
   "modules": [
     "GRIN",
     "GSIN",
     "GMIN",
     "GKIN",
     "CMIE",
-    "DMAP-CAL™",
+    "DMAP-CAL\u2122",
     "MOOP"
   ],
   "source_registry": {
@@ -39,7 +39,7 @@
       "update_frequency": "6-hourly"
     },
     "Source_003": {
-      "name": "NOAA CRW — DHW + BAA",
+      "name": "NOAA CRW \u2014 DHW + BAA",
       "dataset": "NOAA_DHW",
       "baseUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap",
       "variables": [
@@ -52,7 +52,7 @@
       "note": "Shares ERDDAP call with Source_001. No additional API request required."
     },
     "Source_004": {
-      "name": "NASA OceanColor — Chlorophyll-a",
+      "name": "NASA OceanColor \u2014 Chlorophyll-a",
       "dataset": "MODISA_L3m_CHL",
       "baseUrl": "https://oceandata.sci.gsfc.nasa.gov",
       "variables": [
@@ -66,7 +66,7 @@
       "note": "log10 transform required before normalization. 8-day composite preferred over daily to reduce cloud-gap noise."
     },
     "Source_005": {
-      "name": "Copernicus Marine — Global Physics Analysis and Forecast",
+      "name": "Copernicus Marine \u2014 Global Physics Analysis and Forecast",
       "dataset": "GLOBAL_ANALYSISFORECAST_PHY_001_024",
       "baseUrl": "https://nrt.cmems-du.eu/thredds/dodsC/cmems_mod_glo_phy-all_anfc_0.083deg_P1D-m",
       "variables": [
@@ -88,8 +88,8 @@
       "dataset": "ACA_reef_habitat_v2_0",
       "accessMode": "LOCAL_GEOJSON",
       "dataVersion": "v2.0",
-      "vintage": "2018–2021 (static — PlanetScope composite)",
-      "coverage": "30°N–30°S, shallow tropical reefs ≤15 m depth",
+      "vintage": "2018\u20132021 (static \u2014 PlanetScope composite)",
+      "coverage": "30\u00b0N\u201330\u00b0S, shallow tropical reefs \u226415 m depth",
       "resolution_m": 5,
       "update_frequency": "static (periodic release updates)",
       "auth_required": false,
@@ -102,13 +102,33 @@
       "benthic_classes": 7,
       "dependency": "turf.js v6.5.0 (client-side point-in-polygon)",
       "local_data_paths": {
-        "benthic":    "/data/aca_caribbean_benthic.geojson",
+        "benthic": "/data/aca_caribbean_benthic.geojson",
         "geomorphic": "/data/aca_caribbean_geomorphic.geojson",
         "reefExtent": "/data/aca_caribbean_reef_extent.geojson"
       },
       "download_url": "https://allencoralatlas.org/atlas/",
-      "todo": "TODO_ENDPOINT — Download Caribbean AOI GeoJSON from allencoralatlas.org/atlas and commit to /data/ before this source is active. Verify GeoJSON property key for class code after download.",
+      "todo": "TODO_ENDPOINT \u2014 Download Caribbean AOI GeoJSON from allencoralatlas.org/atlas and commit to /data/ before this source is active. Verify GeoJSON property key for class code after download.",
       "citation": "Allen Coral Atlas (2020). Imagery, maps and monitoring of the world's tropical coral reefs. Zenodo. DOI: 10.5281/zenodo.3833242"
+    },
+    "Source_007": {
+      "name": "NOAA CRW Regional Virtual Stations",
+      "dataset": "CRW_5km_Regional_Virtual_Stations_v3.1",
+      "baseUrl": "https://coralreefwatch.noaa.gov/product/vs/data/",
+      "variables": [
+        "SST_mean",
+        "SST_anomaly",
+        "HotSpot",
+        "DHW",
+        "BAA_7day_max"
+      ],
+      "stationType": "Regional (jurisdiction-level, 90th percentile reef pixels)",
+      "stationCount_RimRun": 16,
+      "stationCount_global": 219,
+      "update_frequency": "daily",
+      "time_series_start": "1985",
+      "auth_required": false,
+      "data_format": "ASCII text (.txt)",
+      "note": "90th-percentile DHW/BAA across reef pixels in jurisdiction. Complements Sources 001/003 (point-level). CMIE uses delta between point and jurisdiction to classify systemic vs. isolated stress."
     }
   },
   "DTIs": {
@@ -134,7 +154,7 @@
       "unit": "%",
       "min": 0,
       "max": 100,
-      "description": "Crustose coralline algae cover — succession stage indicator"
+      "description": "Crustose coralline algae cover \u2014 succession stage indicator"
     },
     "BARE_SUBSTRATE_PCT": {
       "module": "GRIN",
@@ -150,7 +170,7 @@
       "unit": "%",
       "min": 0,
       "max": 100,
-      "description": "Sediment cover on reef substrate — LBSP proxy"
+      "description": "Sediment cover on reef substrate \u2014 LBSP proxy"
     },
     "REEF_BLEACHING_PCT": {
       "module": "GRIN",
@@ -183,7 +203,7 @@
         "climax",
         "arrested"
       ],
-      "description": "Ecological succession stage — recovery index input to DMAP-CAL™"
+      "description": "Ecological succession stage \u2014 recovery index input to DMAP-CAL\u2122"
     },
     "PAM_FV_FM": {
       "module": "GRIN",
@@ -191,15 +211,15 @@
       "unit": "ratio",
       "min": 0,
       "max": 0.75,
-      "description": "Fv/Fm quantum yield of PSII. Healthy: 0.55-0.65. Pre-bleach stress: <0.45. Severe dysfunction: <0.30. Must be measured <50 µmol PAR."
+      "description": "Fv/Fm quantum yield of PSII. Healthy: 0.55-0.65. Pre-bleach stress: <0.45. Severe dysfunction: <0.30. Must be measured <50 \u00b5mol PAR."
     },
     "JUVENILE_CORAL_DENSITY_M2": {
       "module": "GRIN",
       "type": "float",
-      "unit": "count/m²",
+      "unit": "count/m\u00b2",
       "min": 0,
       "max": 500,
-      "description": "Juvenile coral density (<4cm diameter) per m² — recruitment signal"
+      "description": "Juvenile coral density (<4cm diameter) per m\u00b2 \u2014 recruitment signal"
     },
     "HERBIVORE_BIOMASS_KG_HA": {
       "module": "GRIN",
@@ -215,15 +235,15 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Apex predator encounter rate normalized to circuit 1 baseline — trophic cascade trigger"
+      "description": "Apex predator encounter rate normalized to circuit 1 baseline \u2014 trophic cascade trigger"
     },
     "LIONFISH_DENSITY_100M2": {
       "module": "GRIN",
       "type": "float",
-      "unit": "count/100m²",
+      "unit": "count/100m\u00b2",
       "min": 0,
       "max": 200,
-      "description": "Lionfish density per 100m² — herbivore suppression signal distinct from overfishing"
+      "description": "Lionfish density per 100m\u00b2 \u2014 herbivore suppression signal distinct from overfishing"
     },
     "SCTLD_PREVALENCE_PCT": {
       "module": "GRIN",
@@ -231,7 +251,7 @@
       "unit": "%",
       "min": 0,
       "max": 100,
-      "description": "Stony Coral Tissue Loss Disease prevalence at survey site. Non-additive with thermal bleaching — must be logged separately in CMIE."
+      "description": "Stony Coral Tissue Loss Disease prevalence at survey site. Non-additive with thermal bleaching \u2014 must be logged separately in CMIE."
     },
     "ALGAE_CONTACT_MARGIN_M": {
       "module": "GRIN",
@@ -239,7 +259,7 @@
       "unit": "meters",
       "min": 0,
       "max": 100,
-      "description": "Total algae-coral contact margin length per transect — allelopathy zone proxy"
+      "description": "Total algae-coral contact margin length per transect \u2014 allelopathy zone proxy"
     },
     "SEAGRASS_COVER_PCT": {
       "module": "GSIN",
@@ -255,7 +275,7 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Composite seagrass health — blade density, rhizome architecture, sediment condition"
+      "description": "Composite seagrass health \u2014 blade density, rhizome architecture, sediment condition"
     },
     "SEAGRASS_CARBON_BURIAL_INDEX": {
       "module": "GSIN",
@@ -263,7 +283,7 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Biological pump efficiency proxy — sediment darkness, rhizome intact, no bioturbation"
+      "description": "Biological pump efficiency proxy \u2014 sediment darkness, rhizome intact, no bioturbation"
     },
     "MANGROVE_CANOPY_INDEX": {
       "module": "GMIN",
@@ -287,33 +307,33 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Estimated DOC export capacity to adjacent seagrass/reef — derived from canopy area"
+      "description": "Estimated DOC export capacity to adjacent seagrass/reef \u2014 derived from canopy area"
     },
     "WATER_TEMP_C": {
       "module": "GKIN",
       "type": "float",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "min": -2,
       "max": 40,
       "source": "Source_001",
       "variable_key": "CRW_SST",
       "normalize_fn": "sstNormalize",
-      "description": "Sea surface temperature from NOAA CoralTemp. Normalized: 24°C=10, 30°C=0 (inverted — hotter=lower score)."
+      "description": "Sea surface temperature from NOAA CoralTemp. Normalized: 24\u00b0C=10, 30\u00b0C=0 (inverted \u2014 hotter=lower score)."
     },
     "WATER_TEMP_ANOMALY_C": {
       "module": "GKIN",
       "type": "float",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "min": -10,
       "max": 10,
       "source": "Source_001",
       "variable_key": "CRW_SSTANOMALY",
-      "description": "SST anomaly vs. site MMM baseline. >+1°C for >4 weeks triggers Sverdrup NPP flag."
+      "description": "SST anomaly vs. site MMM baseline. >+1\u00b0C for >4 weeks triggers Sverdrup NPP flag."
     },
     "DHW_DEGREE_HEATING_WEEKS": {
       "module": "GKIN",
       "type": "float",
-      "unit": "°C-weeks",
+      "unit": "\u00b0C-weeks",
       "min": 0,
       "max": 30,
       "source": "Source_003",
@@ -324,7 +344,7 @@
         "alert_1": 8,
         "alert_2": 12
       },
-      "description": "Degree Heating Weeks — primary bleaching predictor. Piecewise normalized: 0=10, 4=7, 8=4, 12=1, >12=0. Highest single-variable CMIE weight."
+      "description": "Degree Heating Weeks \u2014 primary bleaching predictor. Piecewise normalized: 0=10, 4=7, 8=4, 12=1, >12=0. Highest single-variable CMIE weight."
     },
     "BAA_BLEACHING_ALERT_AREA": {
       "module": "GKIN",
@@ -354,7 +374,7 @@
     "CHLOROPHYLL_A_MGL": {
       "module": "GKIN",
       "type": "float",
-      "unit": "mg/m³",
+      "unit": "mg/m\u00b3",
       "min": 0.001,
       "max": 10,
       "source": "Source_004",
@@ -380,7 +400,7 @@
         "RED_SEA": 0.9,
         "CORAL_TRIANGLE": 1.0
       },
-      "description": "Surface chlorophyll-a concentration — primary proxy for nutrient/pollution loading. log10 transform required. Low Chl-a = clear oligotrophic water (reef-favorable). Direction: negative (higher=lower score). NASA Earthdata auth required."
+      "description": "Surface chlorophyll-a concentration \u2014 primary proxy for nutrient/pollution loading. log10 transform required. Low Chl-a = clear oligotrophic water (reef-favorable). Direction: negative (higher=lower score). NASA Earthdata auth required."
     },
     "OMEGA_ARAGONITE": {
       "module": "GKIN",
@@ -401,7 +421,7 @@
     "NUTRIENT_DIN_UML": {
       "module": "GKIN",
       "type": "float",
-      "unit": "µmol/L",
+      "unit": "\u00b5mol/L",
       "min": 0,
       "max": 500,
       "description": "Dissolved inorganic nitrogen (NH4+ + NO2- + NO3-). Sample must be preserved within 30 min."
@@ -409,10 +429,10 @@
     "NUTRIENT_DIP_UML": {
       "module": "GKIN",
       "type": "float",
-      "unit": "µmol/L",
+      "unit": "\u00b5mol/L",
       "min": 0,
       "max": 100,
-      "description": "Dissolved inorganic phosphorus (PO4³⁻). Sample must be preserved within 30 min."
+      "description": "Dissolved inorganic phosphorus (PO4\u00b3\u207b). Sample must be preserved within 30 min."
     },
     "WATER_TURBIDITY_NTU": {
       "module": "GKIN",
@@ -420,7 +440,7 @@
       "unit": "NTU",
       "min": 0,
       "max": 1000,
-      "description": "Water turbidity — LBSP sediment proxy"
+      "description": "Water turbidity \u2014 LBSP sediment proxy"
     },
     "SECCHI_DEPTH_M": {
       "module": "GKIN",
@@ -428,7 +448,7 @@
       "unit": "meters",
       "min": 0,
       "max": 50,
-      "description": "Secchi disk depth — turbidity proxy, concurrent with water chemistry sampling"
+      "description": "Secchi disk depth \u2014 turbidity proxy, concurrent with water chemistry sampling"
     },
     "VISIBILITY_M": {
       "module": "GKIN",
@@ -447,7 +467,7 @@
       "source": "Source_002",
       "variable_key": "HTSGW_surface",
       "normalize_fn": "waveNormalize",
-      "description": "Significant wave height (Hs) — Source 002. Visual Beaufort estimate or instrument."
+      "description": "Significant wave height (Hs) \u2014 Source 002. Visual Beaufort estimate or instrument."
     },
     "THERMOCLINE_DEPTH_M": {
       "module": "GKIN",
@@ -473,7 +493,7 @@
         "non_compliant",
         "flagged_resurvey"
       ],
-      "description": "Survey tidal phase vs. circuit 1 anchor (±1hr). Non-compliant data cannot enter longitudinal cover trend."
+      "description": "Survey tidal phase vs. circuit 1 anchor (\u00b11hr). Non-compliant data cannot enter longitudinal cover trend."
     },
     "IMAGE_CONFIDENCE_TIER": {
       "module": "MOOP",
@@ -523,7 +543,7 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Estimated reef resilience — rate of recovery between disturbance events across circuits."
+      "description": "Estimated reef resilience \u2014 rate of recovery between disturbance events across circuits."
     },
     "CMIE_RESISTANCE_INDEX": {
       "module": "CMIE",
@@ -531,7 +551,7 @@
       "unit": "index",
       "min": 0,
       "max": 1,
-      "description": "Estimated reef resistance — magnitude of disturbance survived without phase shift."
+      "description": "Estimated reef resistance \u2014 magnitude of disturbance survived without phase shift."
     },
     "COVER_TRAJECTORY": {
       "module": "CMIE",
@@ -543,7 +563,7 @@
         "accelerating_decline",
         "insufficient_data"
       ],
-      "description": "Multi-circuit coral cover trajectory. Requires ≥2 circuits. Overrides status-only DS for routing."
+      "description": "Multi-circuit coral cover trajectory. Requires \u22652 circuits. Overrides status-only DS for routing."
     },
     "OUTCOME_SIGNAL": {
       "module": "CMIE",
@@ -557,15 +577,15 @@
       "description": "Circuit-over-circuit outcome classification from CMIE"
     },
     "DS_SCORE": {
-      "module": "DMAP-CAL™",
+      "module": "DMAP-CAL\u2122",
       "type": "float",
       "unit": "score",
       "min": 0,
       "max": 10,
-      "description": "Decision Score: DS = α·E[Benefit] − β·Risk − γ·Cost + δ·Feasibility"
+      "description": "Decision Score: DS = \u03b1\u00b7E[Benefit] \u2212 \u03b2\u00b7Risk \u2212 \u03b3\u00b7Cost + \u03b4\u00b7Feasibility"
     },
     "DS_LOCAL_DRIVER_PCT": {
-      "module": "DMAP-CAL™",
+      "module": "DMAP-CAL\u2122",
       "type": "float",
       "unit": "%",
       "min": 0,
@@ -573,14 +593,14 @@
       "description": "Percentage of DS driven by locally actionable stressors (Tier 1-4). Critical for intervention ROI calculation."
     },
     "INTERVENTION_TIER": {
-      "module": "DMAP-CAL™",
+      "module": "DMAP-CAL\u2122",
       "type": "integer",
       "min": 1,
       "max": 5,
-      "description": "DMAP-CAL™ intervention tier. 1=site-level (mooring/diver), 2=local regulation, 3=MPA/watershed, 4=restoration, 5=global advocacy."
+      "description": "DMAP-CAL\u2122 intervention tier. 1=site-level (mooring/diver), 2=local regulation, 3=MPA/watershed, 4=restoration, 5=global advocacy."
     },
     "INTERVENTION_TYPE": {
-      "module": "DMAP-CAL™",
+      "module": "DMAP-CAL\u2122",
       "type": "enum",
       "values": [
         "none",
@@ -599,10 +619,10 @@
         "t4_coral_nursery_outplant",
         "t5_policy_advocacy"
       ],
-      "description": "Specific DMAP-CAL™ intervention — prefixed by tier for routing clarity. Tier 5 = climate/global only."
+      "description": "Specific DMAP-CAL\u2122 intervention \u2014 prefixed by tier for routing clarity. Tier 5 = climate/global only."
     },
     "OUTCOME_TIME_DAYS": {
-      "module": "DMAP-CAL™",
+      "module": "DMAP-CAL\u2122",
       "type": "integer",
       "unit": "days",
       "min": 0,
@@ -622,7 +642,7 @@
       "optimal": 35.0,
       "stress_low": 30.0,
       "stress_high": 40.0,
-      "description": "Sea surface salinity. Parabolic normalization — optimal near 35 PSU, stress at both low (<30, freshwater intrusion) and high (>40, hypersaline) extremes."
+      "description": "Sea surface salinity. Parabolic normalization \u2014 optimal near 35 PSU, stress at both low (<30, freshwater intrusion) and high (>40, hypersaline) extremes."
     },
     "CURRENT_SPEED_MS": {
       "module": "GKIN",
@@ -662,7 +682,7 @@
         "V": "vo"
       },
       "normalize_fn": "none",
-      "description": "Surface current direction (degrees from North). Used for reef aspect/exposure calculation in CMIE — not independently normalized. Combined with site aspect data."
+      "description": "Surface current direction (degrees from North). Used for reef aspect/exposure calculation in CMIE \u2014 not independently normalized. Combined with site aspect data."
     },
     "MIXED_LAYER_DEPTH_M": {
       "module": "GKIN",
@@ -685,7 +705,7 @@
         "RED_SEA": 1.2,
         "CORAL_TRIANGLE": 1.0
       },
-      "description": "Ocean mixed layer depth. Deeper MLD = greater thermal buffering = higher score. Shallow MLD during thermal stress amplifies bleaching risk. RED_SEA elevated — stratification is acute bleaching amplifier in Red Sea basin."
+      "description": "Ocean mixed layer depth. Deeper MLD = greater thermal buffering = higher score. Shallow MLD during thermal stress amplifies bleaching risk. RED_SEA elevated \u2014 stratification is acute bleaching amplifier in Red Sea basin."
     },
     "SUBSURFACE_TEMP_DELTA_C": {
       "module": "GKIN",
@@ -710,7 +730,7 @@
     "RSI": {
       "module": "GRIN",
       "type": "float",
-      "unit": "0–10 scale",
+      "unit": "0\u201310 scale",
       "min": 0.0,
       "max": 10.0,
       "source": "Source_006",
@@ -718,55 +738,116 @@
       "normalize_type": "positive",
       "direction": "POSITIVE",
       "direction_note": "Higher RSI = better reef structural integrity. No inversion required for CMIE integration.",
-      "formula": "RSI = (0.40 × zoneScore) + (0.40 × benthicScore) + (0.20 × presenceScore)",
+      "formula": "RSI = (0.40 \u00d7 zoneScore) + (0.40 \u00d7 benthicScore) + (0.20 \u00d7 presenceScore)",
       "weights": {
-        "zone": 0.40,
-        "benthic": 0.40,
-        "presence": 0.20
+        "zone": 0.4,
+        "benthic": 0.4,
+        "presence": 0.2
       },
       "null_handling": {
-        "benthic_unmapped": "RSI = (0.70 × zoneScore) + (0.30 × presenceScore) → flag: BENTHIC_UNMAPPED",
-        "presence_unknown": "RSI = (0.50 × zoneScore) + (0.50 × benthicScore) → flag: PRESENCE_UNKNOWN",
-        "zone_unmapped":    "RSI = null → flag: OUTSIDE_ACA_EXTENT"
+        "benthic_unmapped": "RSI = (0.70 \u00d7 zoneScore) + (0.30 \u00d7 presenceScore) \u2192 flag: BENTHIC_UNMAPPED",
+        "presence_unknown": "RSI = (0.50 \u00d7 zoneScore) + (0.50 \u00d7 benthicScore) \u2192 flag: PRESENCE_UNKNOWN",
+        "zone_unmapped": "RSI = null \u2192 flag: OUTSIDE_ACA_EXTENT"
       },
       "confidence_tiers": {
-        "HIGH":     "All three components (zone + benthic + presence) available",
+        "HIGH": "All three components (zone + benthic + presence) available",
         "MODERATE": "Two components available (benthic unmapped OR presence unknown)",
-        "LOW":      "Zone score only",
-        "NONE":     "Outside ACA extent or data load failure"
+        "LOW": "Zone score only",
+        "NONE": "Outside ACA extent or data load failure"
       },
       "flags": {
-        "OUTSIDE_ACA_EXTENT":          "Point outside ACA geomorphic mapping extent",
-        "OUTSIDE_ACA_LATITUDE_BOUNDS": "Latitude > 30°N or < 30°S",
-        "BENTHIC_UNMAPPED":            "Point >10m depth or turbid — benthic layer unavailable",
-        "PRESENCE_UNKNOWN":            "Reef extent product returned no result",
-        "ZONE_ONLY":                   "Zone score only; benthic and presence both unavailable",
-        "DATA_LOAD_FAILED":            "GeoJSON files not found — see TODO_ENDPOINT in allen-coral-atlas.js"
+        "OUTSIDE_ACA_EXTENT": "Point outside ACA geomorphic mapping extent",
+        "OUTSIDE_ACA_LATITUDE_BOUNDS": "Latitude > 30\u00b0N or < 30\u00b0S",
+        "BENTHIC_UNMAPPED": "Point >10m depth or turbid \u2014 benthic layer unavailable",
+        "PRESENCE_UNKNOWN": "Reef extent product returned no result",
+        "ZONE_ONLY": "Zone score only; benthic and presence both unavailable",
+        "DATA_LOAD_FAILED": "GeoJSON files not found \u2014 see TODO_ENDPOINT in allen-coral-atlas.js"
       },
       "geomorphic_rubric": {
-        "11_ReefCrest":            10.0,
-        "14_ReefSlope":             9.5,
-        "12_OuterReefFlat":         8.0,
-        "19_ShelteredReefSlope":    8.0,
-        "16_Plateau":               7.5,
-        "15_BackReefSlope":         7.0,
-        "13_InnerReefFlat":         6.5,
-        "17_Lagoon":                4.0,
-        "21_SparseReef":            3.5,
-        "18_DeepLagoon":            2.5,
-        "20_TerrestrialReefFlat":   1.5,
-        "22_Unknown":               null
+        "11_ReefCrest": 10.0,
+        "14_ReefSlope": 9.5,
+        "12_OuterReefFlat": 8.0,
+        "19_ShelteredReefSlope": 8.0,
+        "16_Plateau": 7.5,
+        "15_BackReefSlope": 7.0,
+        "13_InnerReefFlat": 6.5,
+        "17_Lagoon": 4.0,
+        "21_SparseReef": 3.5,
+        "18_DeepLagoon": 2.5,
+        "20_TerrestrialReefFlat": 1.5,
+        "22_Unknown": null
       },
       "benthic_rubric": {
-        "401_CoralAlgae":     9.0,
+        "401_CoralAlgae": 9.0,
         "402_MicroalgalMats": 5.0,
-        "406_Seagrass":       4.5,
-        "403_Rock":           4.0,
-        "404_Rubble":         2.0,
-        "405_Sand":           1.0,
-        "407_Unknown":        null
+        "406_Seagrass": 4.5,
+        "403_Rock": 4.0,
+        "404_Rubble": 2.0,
+        "405_Sand": 1.0,
+        "407_Unknown": null
       },
-      "description": "Reef Structural Integrity Index — composite score from ACA geomorphic zone, benthic habitat class, and reef presence. Static dataset (2018–2021). Provides spatial structural baseline for CMIE; not a real-time signal."
+      "description": "Reef Structural Integrity Index \u2014 composite score from ACA geomorphic zone, benthic habitat class, and reef presence. Static dataset (2018\u20132021). Provides spatial structural baseline for CMIE; not a real-time signal."
+    },
+    "VS_DHW_90PCT": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "\u00b0C-weeks",
+      "min": 0,
+      "max": 30,
+      "source": "Source_007",
+      "variable_key": "DHW",
+      "normalize_fn": "normalizeDHW",
+      "normalize_type": "piecewise_negative",
+      "direction": "NEGATIVE",
+      "thresholds": {
+        "watch": 4,
+        "alert_1": 8,
+        "alert_2": 12
+      },
+      "normalized_scores": {
+        "0": 10.0,
+        "4": 7.0,
+        "8": 4.0,
+        "12": 1.0,
+        ">12": 0.0
+      },
+      "note": "Jurisdiction 90th-percentile DHW. Same piecewise rubric as DHW_DEGREE_HEATING_WEEKS (Source_003) for direct CMIE delta comparison. Higher value = more stress = lower score.",
+      "cmie_delta_partner": "DHW_DEGREE_HEATING_WEEKS",
+      "cmie_delta_flags": {
+        "POINT_ANOMALOUSLY_HOT": "Point DHW > VS DHW by >2\u00b0C-wk \u2014 isolated hotspot",
+        "SYSTEMIC_JURISDICTION_STRESS": "VS DHW > Point DHW by >2\u00b0C-wk \u2014 systemic event",
+        "POINT_REPRESENTATIVE_OF_JURISDICTION": "Delta \u2264 \u00b12\u00b0C-wk \u2014 point is representative"
+      },
+      "description": "NOAA CRW Virtual Station Degree Heating Weeks \u2014 90th percentile of reef pixels in jurisdiction. Provides jurisdictional thermal stress context for CMIE. Distinct from DHW_DEGREE_HEATING_WEEKS (Source_003) which is point-level gridded."
+    },
+    "VS_BAA_7D_MAX": {
+      "module": "GKIN",
+      "type": "integer",
+      "unit": "categorical",
+      "min": 0,
+      "max": 4,
+      "source": "Source_007",
+      "variable_key": "BAA_7day_max",
+      "normalize_fn": "normalizeBAA",
+      "normalize_type": "categorical_negative",
+      "direction": "NEGATIVE",
+      "values": {
+        "0": "No Thermal Stress",
+        "1": "Bleaching Watch",
+        "2": "Bleaching Warning",
+        "3": "Bleaching Alert Level 1",
+        "4": "Bleaching Alert Level 2"
+      },
+      "normalized_scores": {
+        "0": 10.0,
+        "1": 7.0,
+        "2": 5.0,
+        "3": 2.5,
+        "4": 0.0
+      },
+      "note": "Jurisdiction 7-day max BAA. Same categorical rubric as BAA_BLEACHING_ALERT_AREA (Source_003). Represents worst stress level reached across the reef jurisdiction in the past 7 days.",
+      "cmie_delta_partner": "BAA_BLEACHING_ALERT_AREA",
+      "description": "NOAA CRW Virtual Station 7-day maximum Bleaching Alert Area \u2014 jurisdiction-level. Derived from 90th percentile HotSpot/DHW pair across all reef pixels in station boundary. Complements point-level BAA from Source_003."
     }
   }
 }
