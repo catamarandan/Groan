@@ -1,9 +1,9 @@
-{
-  "version": "1.6",
-  "updated": "2026-05-01",
+
+  "version": "1.8",
+  "updated": "2026-05-02",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN\u2122 \u2014 Global Reef & Ocean Analytics Network",
-  "notes": "v1.6 \u2014 Added Source_008 (Global Fishing Watch) DTI: FPI (Fishing Pressure Index).",
+  "notes": "v1.8 \u2014 Added Source_010 (KAUST/CORDAP) DTIs: RED_SEA_RHI, RED_SEA_THERMAL_TOLERANCE_FLAG.",
   "modules": [
     "GRIN",
     "GSIN",
@@ -147,6 +147,48 @@
       "rate_limit": "50,000 requests/day",
       "caveat": "AIS vessels only (~70,000). Non-AIS artisanal fishing not detected. May overestimate reef health in high small-boat fishing regions (coastal Honduras, Nicaragua, Guatemala).",
       "note": "Default AOI: \u00b10.5\u00b0 bounding box (~55km) around waypoint. Default period: 30 days. Total fishing hours summed across AOI cells, log10-normalized to FPI."
+    },
+    "Source_011": {
+      "name": "Healthy Reefs Initiative / AGRRA",
+      "components": {
+        "HRI": "Healthy Reefs for Healthy People Initiative (Smithsonian Institution)",
+        "AGRRA": "Atlantic and Gulf Rapid Reef Assessment Program"
+      },
+      "dataset": "HRI Mesoamerican Reef Report Cards (biennial) + AGRRA Caribbean Database",
+      "accessMode": "STATIC_HARDCODED (no REST API)",
+      "coverage": "MAR: Mexico, Belize, Guatemala, Honduras (~300 sites, ~1,000 km coast)",
+      "latestReportCard": 2024,
+      "surveyYearLatest": 2023,
+      "updateFrequency": "Biennial (~every 2 years)",
+      "nextExpectedUpdate": "~Late 2026",
+      "auth_required": false,
+      "dataUrl": "https://www.healthyreefs.org/en/healthy-reefs-data/report-cards",
+      "agrraPortal": "https://www.agrra.org/data-explorer/",
+      "indicators": [
+        "live_coral_cover_pct",
+        "fleshy_macroalgae_cover_pct",
+        "herbivorous_fish_biomass_kgha",
+        "commercial_fish_biomass_kgha"
+      ],
+      "rhi_scale": "1-5 (1=Critical, 2=Poor, 3=Fair, 4=Good, 5=Very Good)",
+      "note": "No REST API. Values hardcoded from published Report Cards. Update hri-agrra.js when new Report Card releases. GROAN validation reference for Caribbean theater."
+    },
+    "Source_010": {
+      "name": "KAUST Red Sea Research Center / CORDAP",
+      "components": {
+        "KAUST_RSRC": "King Abdullah University of Science and Technology \u2014 Red Sea Research Center",
+        "CORDAP": "G20 Coral Research & Development Accelerator Platform (hosted at KAUST)"
+      },
+      "dataset": "KAUST/RSRC published survey data + CORDAP project outputs",
+      "accessMode": "STATIC_HARDCODED + LIVE_STUB (no public REST API currently)",
+      "coverage": "Red Sea \u2014 Northern, Central (Thuwal, 22\u00b0N), Southern zones",
+      "auth_required": false,
+      "live_endpoint_var": "window.GROAN.config.KAUST_API_ENDPOINT",
+      "live_key_var": "window.GROAN.config.KAUST_API_KEY",
+      "contact": "Dr. Haiwei Luo \u2014 KAUST/CORDAP (awaiting response)",
+      "primaryRef": "Gonzalez et al. (2024). Sci. Reports. DOI: 10.1038/s41598-024-74956-7",
+      "cordap_dss_call": "USD $1.5M AI Decision Support System call (2026) \u2014 GROAN alignment",
+      "note": "No public API. Benchmarks hardcoded from peer-reviewed KAUST/RSRC publications. Live stub activates when partnership with Dr. Haiwei confirmed. Critical for Red Sea DHW recalibration \u2014 Red Sea MMM is ~0.8\u00b0C higher than NOAA global grid."
     }
   },
   "DTIs": {
@@ -907,6 +949,236 @@
       },
       "caveat": "AIS vessels only. Non-AIS artisanal fishing not captured. FPI may overestimate health in coastal small-boat fishing regions.",
       "description": "Fishing Pressure Index \u2014 apparent fishing effort (hours) within \u00b10.5\u00b0 AOI over 30-day window, log10-normalized to 0\u201310. Feeds DMAP-CAL\u2122 Tier 2 (fisheries stressor) and CMIE trophic cascade module."
+    },
+    "RHI_SCORE": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "0\u201310 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_011",
+      "variable_key": "rhi",
+      "normalize_fn": "normalizeRHI",
+      "normalize_type": "linear_rescale_positive",
+      "direction": "POSITIVE",
+      "formula": "GROAN_RHI = (RHI_raw \u2212 1) / 4 \u00d7 10",
+      "rhi_native_scale": "1\u20135 (Critical to Very Good)",
+      "grade_map": {
+        "CRITICAL": {
+          "rhi": [
+            1.0,
+            1.5
+          ],
+          "groan": [
+            0.0,
+            1.25
+          ]
+        },
+        "POOR": {
+          "rhi": [
+            1.5,
+            2.5
+          ],
+          "groan": [
+            1.25,
+            3.75
+          ]
+        },
+        "FAIR": {
+          "rhi": [
+            2.5,
+            3.5
+          ],
+          "groan": [
+            3.75,
+            6.25
+          ]
+        },
+        "GOOD": {
+          "rhi": [
+            3.5,
+            4.5
+          ],
+          "groan": [
+            6.25,
+            8.75
+          ]
+        },
+        "VERY_GOOD": {
+          "rhi": [
+            4.5,
+            5.0
+          ],
+          "groan": [
+            8.75,
+            10.0
+          ]
+        }
+      },
+      "2024_country_scores": {
+        "MAR_REGIONAL": 2.5,
+        "MEXICO": 2.5,
+        "BELIZE": 2.5,
+        "GUATEMALA": 2.3,
+        "HONDURAS": 2.4
+      },
+      "description": "Reef Health Index from HRI Mesoamerican Reef Report Card, normalized to GROAN 0\u201310 scale. Jurisdictional benchmark for Caribbean validation. MAR coverage only (Mexico/Belize/Guatemala/Honduras). Static \u2014 updated at each biennial HRI Report Card release."
+    },
+    "AGRRA_DELTA_CORAL": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "percentage points delta",
+      "min": -100,
+      "max": 100,
+      "source": "Source_011",
+      "normalize_fn": "none",
+      "direction": "POSITIVE_DELTA",
+      "direction_note": "Positive = site above regional coral average (good). Negative = below average.",
+      "cmie_flags": {
+        "BELOW_REGIONAL_CORAL_AVERAGE": "delta < \u221210 percentage points",
+        "ABOVE_REGIONAL_CORAL_AVERAGE": "delta > +15 percentage points"
+      },
+      "inputs_required": [
+        "CORAL_COVER_PCT (GRIN field obs)",
+        "MAR country benchmark (Source_011)"
+      ],
+      "description": "Delta between GRIN field coral cover observation and published HRI/AGRRA regional benchmark for that MAR country. Negative = site performing below country average."
+    },
+    "AGRRA_DELTA_ALGAE": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "percentage points delta",
+      "min": -100,
+      "max": 100,
+      "source": "Source_011",
+      "normalize_fn": "none",
+      "direction": "NEGATIVE_DELTA",
+      "direction_note": "Positive = more algae than regional average (bad). Negative = less algae (good).",
+      "cmie_flags": {
+        "MACROALGAE_ABOVE_REGIONAL_AVERAGE": "delta > +10 percentage points"
+      },
+      "inputs_required": [
+        "ALGAE_COVER_PCT (GRIN field obs)",
+        "MAR country benchmark (Source_011)"
+      ],
+      "description": "Delta between GRIN field fleshy macroalgae cover and published HRI/AGRRA regional benchmark."
+    },
+    "AGRRA_DELTA_HERBIVORE": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "kg/ha delta",
+      "min": -5000,
+      "max": 5000,
+      "source": "Source_011",
+      "normalize_fn": "none",
+      "direction": "POSITIVE_DELTA",
+      "direction_note": "Positive = more herbivore biomass than regional average (good). Negative = depleted.",
+      "cmie_flags": {
+        "HERBIVORE_BIOMASS_CRITICALLY_LOW": "delta < \u221250% of benchmark",
+        "HERBIVORE_BIOMASS_ABOVE_AVERAGE": "delta > +50% of benchmark"
+      },
+      "cmie_compound_flag": {
+        "HERBIVORE_COLLAPSE_CONFIRMED": "HERBIVORE_BIOMASS_CRITICALLY_LOW AND FPI < 5.0 (Sources 011+008)"
+      },
+      "inputs_required": [
+        "HERBIVORE_BIOMASS_KG_HA (GRIN field obs)",
+        "MAR country benchmark (Source_011)"
+      ],
+      "description": "Delta between GRIN field herbivore biomass and published HRI/AGRRA regional benchmark. Cross-references FPI (Source_008) in CMIE for compound trophic flag."
+    },
+    "RED_SEA_RHI": {
+      "module": "GSIN",
+      "type": "float",
+      "unit": "0\u201310 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_010",
+      "normalize_fn": "computeRedSeaRHI",
+      "normalize_type": "weighted_composite_positive",
+      "direction": "POSITIVE",
+      "formula": "RED_SEA_RHI = (0.45 \u00d7 coralScore) + (0.30 \u00d7 algaeScore) + (0.25 \u00d7 herbivoreScore)",
+      "weights": {
+        "coral": 0.45,
+        "algae": 0.3,
+        "herbivore": 0.25
+      },
+      "normalization_ranges": {
+        "coral_pct": {
+          "min": 0,
+          "max": 50,
+          "note": "Red Sea offshore reefs reach 40-50% cover"
+        },
+        "algae_pct": {
+          "min": 0,
+          "max": 50,
+          "note": "Inverted \u2014 0% algae = score 10"
+        },
+        "herbivore_kgha": {
+          "min": 0,
+          "max": 300,
+          "note": "Red Sea reefs are herbivore-dominated"
+        }
+      },
+      "zone_benchmarks": {
+        "CENTRAL_RS_OFFSHORE": {
+          "coralCover_pct": 40.0,
+          "year": 2013,
+          "status": "Pre-bleaching baseline"
+        },
+        "CENTRAL_RS_INSHORE": {
+          "coralCover_pct": 15.0,
+          "year": 2013,
+          "status": "Post-2010 bleaching"
+        },
+        "SOUTHERN_RS_POST_BLEACH": {
+          "coralCover_pct": 4.5,
+          "year": 2024,
+          "status": "Post-2015 collapse"
+        },
+        "RED_SEA_REGIONAL": {
+          "coralCover_pct": 22.0,
+          "year": 2022,
+          "status": "Synthesis estimate"
+        }
+      },
+      "data_status": "STATIC_BENCHMARKS \u2014 live data pending KAUST partnership (TODO_LIVE)",
+      "description": "Red Sea Reef Health Index \u2014 composite from KAUST/RSRC published benthic and fish survey data. Theater-specific benchmark for GSIN Red Sea proof-of-concept. Activates live data when KAUST_API_ENDPOINT configured."
+    },
+    "RED_SEA_THERMAL_TOLERANCE_FLAG": {
+      "module": "CMIE",
+      "type": "enum",
+      "values": [
+        "APPLY_LOCAL_MMM",
+        "MINOR_ADJUSTMENT",
+        "NO_ADJUSTMENT"
+      ],
+      "source": "Source_010",
+      "normalize_fn": "recalibrateDHW",
+      "direction": "N/A (categorical flag \u2014 triggers DHW recalibration)",
+      "theater": "RED_SEA_ONLY",
+      "zones": {
+        "CENTRAL_RED_SEA": {
+          "mmm_c": 30.8,
+          "mmm_offset_vs_noaa": 0.8,
+          "dhw_false_accumulation_12wk": 9.6,
+          "action": "APPLY_LOCAL_MMM"
+        },
+        "NORTHERN_RED_SEA": {
+          "mmm_c": 28.0,
+          "mmm_offset_vs_noaa": 0.3,
+          "dhw_false_accumulation_12wk": 3.6,
+          "action": "MINOR_ADJUSTMENT"
+        },
+        "SOUTHERN_RED_SEA": {
+          "mmm_c": 31.5,
+          "mmm_offset_vs_noaa": 1.2,
+          "dhw_false_accumulation_12wk": 14.4,
+          "action": "APPLY_LOCAL_MMM"
+        }
+      },
+      "cmie_action": "Recalibrate DHW_DEGREE_HEATING_WEEKS (Source_003) using local MMM offset before CMIE scoring. Prevents systematic overestimation of Red Sea thermal stress.",
+      "critical_note": "Without this flag, Sources 001/003 DHW can overstate Red Sea stress by up to 14.4\u00b0C-wk in the southern zone \u2014 sufficient to trigger false BLEACHING_ALERT_LEVEL_2.",
+      "description": "Red Sea thermal tolerance adjustment flag. Triggers recalibrateDHW() in CMIE when processing Red Sea theater queries. Corrects NOAA CRW global MMM grid underestimation of Red Sea Maximum Monthly Mean temperatures."
     }
   }
 }
