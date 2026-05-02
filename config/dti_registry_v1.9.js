@@ -1,9 +1,9 @@
-
-  "version": "1.8",
+{
+  "version": "1.9",
   "updated": "2026-05-02",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN\u2122 \u2014 Global Reef & Ocean Analytics Network",
-  "notes": "v1.8 \u2014 Added Source_010 (KAUST/CORDAP) DTIs: RED_SEA_RHI, RED_SEA_THERMAL_TOLERANCE_FLAG.",
+  "notes": "v1.9 \u2014 Added Source_009 (AIMS LTMP) DTIs: GBR_CORAL_COVER_SCORE, GBR_COTS_FLAG, GBR_DISTURBANCE_INDEX, AIMS_SST_C.",
   "modules": [
     "GRIN",
     "GSIN",
@@ -189,6 +189,26 @@
       "primaryRef": "Gonzalez et al. (2024). Sci. Reports. DOI: 10.1038/s41598-024-74956-7",
       "cordap_dss_call": "USD $1.5M AI Decision Support System call (2026) \u2014 GROAN alignment",
       "note": "No public API. Benchmarks hardcoded from peer-reviewed KAUST/RSRC publications. Live stub activates when partnership with Dr. Haiwei confirmed. Critical for Red Sea DHW recalibration \u2014 Red Sea MMM is ~0.8\u00b0C higher than NOAA global grid."
+    },
+    "Source_009": {
+      "name": "AIMS Long-Term Monitoring Program",
+      "shortName": "AIMS_LTMP",
+      "components": {
+        "live_api": "AIMS Data Platform API v1.0 (SST/temperature \u2014 API key required)",
+        "benchmarks": "AIMS LTMP Annual Summary Reports (benthic \u2014 hardcoded)"
+      },
+      "live_api_endpoint": "https://api.aims.gov.au/data/v1.0/10.25845/5c09bf93f315d/data",
+      "api_key_var": "window.GROAN.config.AIMS_API_KEY",
+      "api_key_registration": "https://open-aims.github.io/data-platform/key_request.html",
+      "benchmark_source": "AIMS LTMP Annual Summary 2024/25",
+      "coverage": "Great Barrier Reef \u2014 Northern, Central, Southern sectors (124 reefs surveyed 2024/25)",
+      "theater": "GBR",
+      "update_frequency": "Annual (published ~August each year)",
+      "auth_required": true,
+      "auth_method": "x-api-key header (free registration)",
+      "latest_report_year": 2025,
+      "bleaching_events_since_2016": 5,
+      "note": "Live API covers SST only. Benthic coral cover data requires form-based download \u2014 hardcoded from Annual Summary. TODO_UPDATE each August."
     }
   },
   "DTIs": {
@@ -1179,8 +1199,94 @@
       "cmie_action": "Recalibrate DHW_DEGREE_HEATING_WEEKS (Source_003) using local MMM offset before CMIE scoring. Prevents systematic overestimation of Red Sea thermal stress.",
       "critical_note": "Without this flag, Sources 001/003 DHW can overstate Red Sea stress by up to 14.4\u00b0C-wk in the southern zone \u2014 sufficient to trigger false BLEACHING_ALERT_LEVEL_2.",
       "description": "Red Sea thermal tolerance adjustment flag. Triggers recalibrateDHW() in CMIE when processing Red Sea theater queries. Corrects NOAA CRW global MMM grid underestimation of Red Sea Maximum Monthly Mean temperatures."
+    },
+    "GBR_CORAL_COVER_SCORE": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "0\u201310 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_009",
+      "normalize_fn": "normalizeCoralCover",
+      "normalize_type": "linear_positive",
+      "direction": "POSITIVE",
+      "formula": "score = min(10, (coralCover_pct / 60) * 10)",
+      "2025_benchmarks": {
+        "NORTHERN_GBR": {
+          "coralCover_pct": 30.0,
+          "pre_bleach_2024": 39.8,
+          "longTermAvg": 26.6
+        },
+        "CENTRAL_GBR": {
+          "coralCover_pct": 28.6,
+          "pre_bleach_2024": 33.2,
+          "longTermAvg": 19.8
+        },
+        "SOUTHERN_GBR": {
+          "coralCover_pct": null,
+          "pre_bleach_2024": 39.1,
+          "note": "Pending post-bleach survey"
+        }
+      },
+      "description": "GBR hard coral cover normalized to 0\u201310. Derived from AIMS LTMP Annual Summary manta tow surveys. Static benchmark \u2014 updated annually each August. Post-2024 mass bleaching event shows 14\u201325% regional declines."
+    },
+    "GBR_COTS_FLAG": {
+      "module": "CMIE",
+      "type": "enum",
+      "values": [
+        "NO_COTS",
+        "LOW",
+        "ACTIVE_SOME_REEFS",
+        "OUTBREAK_ACTIVE"
+      ],
+      "source": "Source_009",
+      "normalize_fn": "none (categorical)",
+      "direction": "N/A",
+      "cmie_flags": {
+        "NO_COTS": null,
+        "LOW": "COTS_WATCH",
+        "ACTIVE_SOME_REEFS": "COTS_ACTIVE",
+        "OUTBREAK_ACTIVE": "COTS_OUTBREAK_ACTIVE"
+      },
+      "compound_trigger": "COTS_OUTBREAK_ACTIVE + DHW_DEGREE_HEATING_WEEKS > 4 \u2192 COTS_BLEACHING_COMPOUND",
+      "2025_status": {
+        "NORTHERN_GBR": "LOW",
+        "CENTRAL_GBR": "ACTIVE_SOME_REEFS",
+        "SOUTHERN_GBR": "OUTBREAK_ACTIVE"
+      },
+      "description": "Crown-of-Thorns Starfish disturbance level by GBR sector. GBR-specific stressor \u2014 no Caribbean equivalent. COTS outbreaks compound bleaching mortality, particularly on fast-recovering Acropora."
+    },
+    "GBR_DISTURBANCE_INDEX": {
+      "module": "CMIE",
+      "type": "float",
+      "unit": "0\u201310 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_009",
+      "normalize_fn": "computeDisturbanceIndex",
+      "normalize_type": "weighted_negative",
+      "direction": "NEGATIVE",
+      "formula": "score = max(0, 10 - disturbance_points). Weights: MASS_BLEACHING=3.0, COTS_OUTBREAK=2.0, MAJOR_CYCLONE=2.0, MINOR_CYCLONE=1.5, FLOODING=1.0",
+      "2025_context": "2024 saw 5th mass bleaching + 2 cyclones + flooding \u2014 highest compound disturbance load in GBR monitoring history",
+      "cmie_flag": "COMPOUND_DISTURBANCE_GBR when disturbance_points >= 4.0",
+      "description": "Cumulative disturbance index for GBR sector \u2014 bleaching events, COTS outbreaks, cyclones, flooding. Lower score = more disturbance. Used by CMIE to weight coral cover trajectory and recovery probability."
+    },
+    "AIMS_SST_C": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "\u00b0C",
+      "min": 18,
+      "max": 35,
+      "source": "Source_009",
+      "variable_key": "qc_val",
+      "normalize_fn": "sstNormalize (Source_001 function)",
+      "direction": "NEGATIVE",
+      "access": "LIVE \u2014 AIMS Data Platform API (x-api-key required)",
+      "doi": "10.25845/5c09bf93f315d",
+      "coverage_sites": "~80 GBR sites + 16 Coral Sea sites",
+      "note": "In-situ logger SST \u2014 complements Source_001 satellite SST. Higher spatial resolution near reef structures. Use for validation of Source_001 SST values at GBR sites.",
+      "description": "In-situ sea surface temperature from AIMS logger network at GBR reef sites. Live API (free key). Used to validate and ground-truth NOAA CoralTemp (Source_001) satellite-derived SST in the GBR theater."
     }
   }
 }
-
 
