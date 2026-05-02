@@ -1,9 +1,9 @@
 {
-  "version": "1.3",
+  "version": "1.4",
   "updated": "2026-05-01",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN™ — Global Reef & Ocean Analytics Network",
-  "notes": "v1.3 — Added Source_005 (Copernicus Marine) DTIs: SALINITY_PSU, CURRENT_SPEED_MS, CURRENT_DIR_DEG, MIXED_LAYER_DEPTH_M, SUBSURFACE_TEMP_DELTA_C.",
+  "notes": "v1.4 — Added Source_006 (Allen Coral Atlas) and DTI: RSI (Reef Structural Integrity Index).",
   "modules": [
     "GRIN",
     "GSIN",
@@ -82,6 +82,33 @@
       "auth_method": "Basic (username:password)",
       "registration_url": "https://marine.copernicus.eu",
       "note": "Current speed/direction derived from U+V components. Subsurface temp at ~50m for thermal refuge assessment."
+    },
+    "Source_006": {
+      "name": "Allen Coral Atlas",
+      "dataset": "ACA_reef_habitat_v2_0",
+      "accessMode": "LOCAL_GEOJSON",
+      "dataVersion": "v2.0",
+      "vintage": "2018–2021 (static — PlanetScope composite)",
+      "coverage": "30°N–30°S, shallow tropical reefs ≤15 m depth",
+      "resolution_m": 5,
+      "update_frequency": "static (periodic release updates)",
+      "auth_required": false,
+      "variables": [
+        "geomorphic_zone",
+        "benthic_class",
+        "reef_extent"
+      ],
+      "geomorphic_classes": 12,
+      "benthic_classes": 7,
+      "dependency": "turf.js v6.5.0 (client-side point-in-polygon)",
+      "local_data_paths": {
+        "benthic":    "/data/aca_caribbean_benthic.geojson",
+        "geomorphic": "/data/aca_caribbean_geomorphic.geojson",
+        "reefExtent": "/data/aca_caribbean_reef_extent.geojson"
+      },
+      "download_url": "https://allencoralatlas.org/atlas/",
+      "todo": "TODO_ENDPOINT — Download Caribbean AOI GeoJSON from allencoralatlas.org/atlas and commit to /data/ before this source is active. Verify GeoJSON property key for class code after download.",
+      "citation": "Allen Coral Atlas (2020). Imagery, maps and monitoring of the world's tropical coral reefs. Zenodo. DOI: 10.5281/zenodo.3833242"
     }
   },
   "DTIs": {
@@ -679,7 +706,69 @@
         "full_column_stress": 1.5
       },
       "description": "Subsurface temperature at ~50m assessed as delta vs. SST (Source_001). Negative delta = cooler subsurface = thermal refuge potential. Score 10 at -3 C delta, score 5 at 0, score 0 at +3 C delta."
+    },
+    "RSI": {
+      "module": "GRIN",
+      "type": "float",
+      "unit": "0–10 scale",
+      "min": 0.0,
+      "max": 10.0,
+      "source": "Source_006",
+      "normalize_fn": "normalizeRSI",
+      "normalize_type": "positive",
+      "direction": "POSITIVE",
+      "direction_note": "Higher RSI = better reef structural integrity. No inversion required for CMIE integration.",
+      "formula": "RSI = (0.40 × zoneScore) + (0.40 × benthicScore) + (0.20 × presenceScore)",
+      "weights": {
+        "zone": 0.40,
+        "benthic": 0.40,
+        "presence": 0.20
+      },
+      "null_handling": {
+        "benthic_unmapped": "RSI = (0.70 × zoneScore) + (0.30 × presenceScore) → flag: BENTHIC_UNMAPPED",
+        "presence_unknown": "RSI = (0.50 × zoneScore) + (0.50 × benthicScore) → flag: PRESENCE_UNKNOWN",
+        "zone_unmapped":    "RSI = null → flag: OUTSIDE_ACA_EXTENT"
+      },
+      "confidence_tiers": {
+        "HIGH":     "All three components (zone + benthic + presence) available",
+        "MODERATE": "Two components available (benthic unmapped OR presence unknown)",
+        "LOW":      "Zone score only",
+        "NONE":     "Outside ACA extent or data load failure"
+      },
+      "flags": {
+        "OUTSIDE_ACA_EXTENT":          "Point outside ACA geomorphic mapping extent",
+        "OUTSIDE_ACA_LATITUDE_BOUNDS": "Latitude > 30°N or < 30°S",
+        "BENTHIC_UNMAPPED":            "Point >10m depth or turbid — benthic layer unavailable",
+        "PRESENCE_UNKNOWN":            "Reef extent product returned no result",
+        "ZONE_ONLY":                   "Zone score only; benthic and presence both unavailable",
+        "DATA_LOAD_FAILED":            "GeoJSON files not found — see TODO_ENDPOINT in allen-coral-atlas.js"
+      },
+      "geomorphic_rubric": {
+        "11_ReefCrest":            10.0,
+        "14_ReefSlope":             9.5,
+        "12_OuterReefFlat":         8.0,
+        "19_ShelteredReefSlope":    8.0,
+        "16_Plateau":               7.5,
+        "15_BackReefSlope":         7.0,
+        "13_InnerReefFlat":         6.5,
+        "17_Lagoon":                4.0,
+        "21_SparseReef":            3.5,
+        "18_DeepLagoon":            2.5,
+        "20_TerrestrialReefFlat":   1.5,
+        "22_Unknown":               null
+      },
+      "benthic_rubric": {
+        "401_CoralAlgae":     9.0,
+        "402_MicroalgalMats": 5.0,
+        "406_Seagrass":       4.5,
+        "403_Rock":           4.0,
+        "404_Rubble":         2.0,
+        "405_Sand":           1.0,
+        "407_Unknown":        null
+      },
+      "description": "Reef Structural Integrity Index — composite score from ACA geomorphic zone, benthic habitat class, and reef presence. Static dataset (2018–2021). Provides spatial structural baseline for CMIE; not a real-time signal."
     }
   }
 }
+
 
