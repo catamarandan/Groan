@@ -1,9 +1,9 @@
 {
-  "version": "1.9",
+  "version": "2.0",
   "updated": "2026-05-02",
   "owner": "Nevado Ranch Camp LLC",
   "system": "GROAN\u2122 \u2014 Global Reef & Ocean Analytics Network",
-  "notes": "v1.9 \u2014 Added Source_009 (AIMS LTMP) DTIs: GBR_CORAL_COVER_SCORE, GBR_COTS_FLAG, GBR_DISTURBANCE_INDEX, AIMS_SST_C.",
+  "notes": "v2.0 \u2014 COMPLETE. Added Source_012 (eReefs CSIRO/AIMS) DTIs: EREEFS_DIN_MGL, EREEFS_TURBIDITY_NTU, EREEFS_TEMP_C, EREEFS_CHL_MGL. All 12 sources registered. Total: 73 DTIs.",
   "modules": [
     "GRIN",
     "GSIN",
@@ -209,6 +209,23 @@
       "latest_report_year": 2025,
       "bleaching_events_since_2016": 5,
       "note": "Live API covers SST only. Benthic coral cover data requires form-based download \u2014 hardcoded from Annual Summary. TODO_UPDATE each August."
+    },
+    "Source_012": {
+      "name": "eReefs CSIRO/AIMS GBR4 Hydrodynamic + BioGeoChemical Model",
+      "shortName": "EREEFS_CSIRO",
+      "components": {
+        "hydro": "GBR4 Hydrodynamic v4 \u2014 temperature, salinity, currents (CSIRO/AIMS)",
+        "bgc": "GBR4 BGC v3.1 \u2014 DIN, turbidity, chlorophyll, coral, seagrass (CSIRO/AIMS)"
+      },
+      "thredds_base": "https://thredds.ereefs.aims.gov.au/thredds/",
+      "ncss_access": "NetCDF Subset Service (NCSS) \u2014 lat/lon point query, returns CSV",
+      "auth_required": false,
+      "coverage": "GBR (~142\u00b0E\u2013156\u00b0E, 7\u00b0S\u201328\u00b0S), 4km resolution",
+      "theater": "GBR",
+      "update_frequency": "Daily model outputs (NRT)",
+      "bgc_update": "BGC v4.0 expected late 2025 \u2014 will deprecate v3.1",
+      "cors_note": "THREDDS NCSS may be blocked by CORS in browser. Use server-side proxy if blocked.",
+      "note": "Only GROAN source providing modeled subsurface water quality (DIN, turbidity). Cloud-free. Critical for LBSP diagnosis on inshore GBR reefs."
     }
   },
   "DTIs": {
@@ -605,9 +622,11 @@
         "thermal_pre_bleach",
         "sctld_compound",
         "phase_shift_proximity",
-        "compounding_pulse"
+        "compounding_pulse",
+        "lbsp_modeled_elevated",
+        "lbsp_modeled_critical"
       ],
-      "description": "Cross-module interaction signal type. Multiple flags allowed per site per circuit."
+      "description": "Cross-module interaction signal type. Multiple flags allowed per site per circuit. EREEFS LBSP flags: lbsp_modeled_elevated, lbsp_modeled_critical."
     },
     "CMIE_PHASE_SHIFT_PROXIMITY": {
       "module": "CMIE",
@@ -1286,7 +1305,88 @@
       "coverage_sites": "~80 GBR sites + 16 Coral Sea sites",
       "note": "In-situ logger SST \u2014 complements Source_001 satellite SST. Higher spatial resolution near reef structures. Use for validation of Source_001 SST values at GBR sites.",
       "description": "In-situ sea surface temperature from AIMS logger network at GBR reef sites. Live API (free key). Used to validate and ground-truth NOAA CoralTemp (Source_001) satellite-derived SST in the GBR theater."
+    },
+    "EREEFS_DIN_MGL": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "mg N/m\u00b3 (raw) \u2192 \u00b5mol/L (normalized)",
+      "min": 0,
+      "max": null,
+      "source": "Source_012",
+      "variable_key": "DIN",
+      "normalize_fn": "normalizeDIN",
+      "normalize_type": "piecewise_negative",
+      "direction": "NEGATIVE",
+      "conversion": "\u00b5mol/L = mg_N_m3 / 14.007",
+      "thresholds_umolL": {
+        "pristine": "<2",
+        "oligotrophic": "2\u20135",
+        "elevated": "5\u201310",
+        "high": "10\u201320",
+        "very_high": "20\u201350",
+        "eutrophic": ">50"
+      },
+      "lbsp_flag_trigger": "DIN > 10 \u00b5mol/L \u2192 LBSP_MODELED_ELEVATED; >20 \u00b5mol/L \u2192 LBSP_MODELED_CRITICAL",
+      "cmie_chain": "LBSP_MODELED_ELEVATED \u2192 DMAP-CAL\u2122 Tier 2 (nutrient source control)",
+      "description": "Modeled dissolved inorganic nitrogen from eReefs BGC. Cloud-free, subsurface. Primary GROAN indicator for land-based nutrient pollution on GBR inshore reefs."
+    },
+    "EREEFS_TURBIDITY_NTU": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "NTU",
+      "min": 0,
+      "max": null,
+      "source": "Source_012",
+      "variable_key": "Turbidity",
+      "normalize_fn": "normalizeTurbidity",
+      "normalize_type": "linear_negative",
+      "direction": "NEGATIVE",
+      "formula": "score = max(0, 10 - (NTU / 2))",
+      "thresholds": {
+        "clear": "<2 NTU",
+        "watch": "2\u20135 NTU",
+        "elevated": "5\u201310 NTU",
+        "critical": ">10 NTU"
+      },
+      "lbsp_flag_trigger": "Turbidity > 5 NTU \u2192 LBSP_MODELED_ELEVATED; >10 NTU \u2192 LBSP_MODELED_CRITICAL",
+      "cross_validates": "WATER_TURBIDITY_NTU (GKIN field obs)",
+      "description": "Modeled turbidity from eReefs BGC. Complements and cross-validates field turbidity measurements. LBSP sediment loading proxy for GBR inshore reefs."
+    },
+    "EREEFS_TEMP_C": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "\u00b0C",
+      "min": 18,
+      "max": 35,
+      "source": "Source_012",
+      "variable_key": "temp",
+      "normalize_fn": "normalizeEreefsTemp",
+      "normalize_type": "linear_negative",
+      "direction": "NEGATIVE",
+      "formula": "score = 10 - ((temp_c - 24) / 6) * 10. Clamped [0,10].",
+      "depth": "1.5m surface",
+      "cross_validates": "WATER_TEMP_C (Source_001 satellite SST)",
+      "description": "Modeled water temperature from eReefs Hydrodynamic model. Subsurface complement to Source_001 satellite SST. Same normalization rubric for direct CMIE comparison."
+    },
+    "EREEFS_CHL_MGL": {
+      "module": "GKIN",
+      "type": "float",
+      "unit": "mg/m\u00b3",
+      "min": 0.001,
+      "max": null,
+      "source": "Source_012",
+      "variable_key": "Chl_a_sum",
+      "normalize_fn": "normalizeEreefsChl",
+      "normalize_type": "log10_linear_negative",
+      "direction": "NEGATIVE",
+      "transform": "log10",
+      "normalize_range": {
+        "log_min": -2.0,
+        "log_max": 0.3
+      },
+      "cross_validates": "CHLOROPHYLL_A_MGL (Source_004 satellite Chl-a)",
+      "advantage": "Cloud-free modeled product \u2014 fills gaps where satellite (Source_004) is blocked by cloud cover",
+      "description": "Modeled total chlorophyll-a from eReefs BGC. Same log10 normalization as satellite Chl-a (Source_004) for direct CMIE comparison. Cloud-free \u2014 fills data gaps during GBR wet season."
     }
   }
 }
-
