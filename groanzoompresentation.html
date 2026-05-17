@@ -1,0 +1,1042 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GROAN — Partner Consortium Call</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean:    #040d1a;
+  --deep:     #071525;
+  --panel:    #0a1e34;
+  --accent:   #00c8d4;
+  --accent2:  #00e5a0;
+  --gold:     #f0c040;
+  --warn:     #ff8a40;
+  --text:     #d0e8f8;
+  --muted:    #4a7a9a;
+  --grin:     #e05555;
+  --gsin:     #4fc3a1;
+  --gmin:     #5baa6e;
+  --gkin:     #4a9fd4;
+  --gmain:    #f0a040;
+  --hri:      #1a6b4a;
+  --cea:      #7a4a1a;
+  --oceanus:  #4a1a7a;
+  --nrcl:     #1a4a7a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ocean);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── SLIDE CONTAINER ── */
+.deck { width: 100vw; height: 100vh; position: relative; }
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 64px;
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+/* ── NAV ── */
+.nav {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(7,21,37,0.92);
+  border: 1px solid rgba(0,200,212,0.2);
+  border-radius: 40px;
+  padding: 10px 24px;
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: rgba(0,200,212,0.12); }
+.nav-btn:disabled { color: var(--muted); cursor: default; }
+.slide-counter {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  min-width: 60px;
+  text-align: center;
+}
+.nav-dots {
+  display: flex;
+  gap: 5px;
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-dot.active { background: var(--accent); transform: scale(1.4); }
+
+/* ── SHARED ELEMENTS ── */
+.slide-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+.slide-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #e8f4ff;
+}
+.accent-line {
+  width: 48px; height: 3px;
+  border-radius: 2px;
+  margin: 20px 0;
+  align-self: flex-start;
+}
+.tag {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+/* ── GRID ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; width: 100%; }
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; width: 100%; }
+
+/* ── CARD ── */
+.card {
+  background: rgba(10,30,52,0.7);
+  border: 1px solid rgba(0,200,212,0.15);
+  border-radius: 10px;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+.card p, .card li {
+  font-size: 13px;
+  color: rgba(208,232,248,0.8);
+  line-height: 1.6;
+}
+.card ul { padding-left: 16px; }
+.card ul li { margin-bottom: 6px; }
+
+/* ── STAT ── */
+.stat-block {
+  text-align: center;
+  padding: 24px 16px;
+  background: rgba(10,30,52,0.7);
+  border-radius: 10px;
+  border: 1px solid rgba(0,200,212,0.12);
+}
+.stat-number {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ── PARTNER BADGE ── */
+.partner-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.partner-emoji { font-size: 22px; }
+.partner-name { font-weight: 600; font-size: 14px; }
+.partner-sub { font-size: 11px; opacity: 0.7; font-family: 'DM Mono', monospace; }
+
+/* ── TIMELINE ── */
+.timeline { display: flex; gap: 0; width: 100%; }
+.tl-item {
+  flex: 1;
+  padding: 16px;
+  border-top: 3px solid var(--muted);
+  position: relative;
+}
+.tl-item.active-tl { border-top-color: var(--accent); }
+.tl-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.tl-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* ── BG EFFECTS ── */
+.bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.slide > * { position: relative; z-index: 1; }
+
+/* ── MOU TABLE ── */
+.mou-table { width: 100%; border-collapse: collapse; }
+.mou-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,200,212,0.2);
+}
+.mou-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(0,200,212,0.08);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.mou-table tr:last-child td { border-bottom: none; }
+.mou-table tr:hover td { background: rgba(0,200,212,0.04); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.4s ease;
+  z-index: 200;
+}
+
+/* ── LOGO ── */
+.groan-logo {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(48px, 8vw, 96px);
+  background: linear-gradient(135deg, #00c8d4 0%, #00e5a0 50%, #4a9fd4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+/* ── AGENDA ITEM ── */
+.agenda-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border-left: 3px solid var(--muted);
+  background: rgba(10,30,52,0.5);
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.agenda-item.highlight {
+  border-left-color: var(--accent);
+  background: rgba(0,200,212,0.06);
+}
+.agenda-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  min-width: 50px;
+}
+.agenda-title { font-size: 14px; font-weight: 500; }
+.agenda-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── CASCADE FLOW ── */
+.cascade {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cascade-node {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+.cascade-arrow {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+/* ── MODULE PILLS ── */
+.module-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 8px 0;
+}
+.module-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+/* ── EQUITY CIRCLE ── */
+.equity-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(0,200,212,0.1);
+}
+.equity-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.equity-bar {
+  height: 100%;
+  border-radius: 4px;
+}
+.equity-pct {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 22px;
+  min-width: 58px;
+  text-align: right;
+}
+.equity-name {
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 160px;
+}
+
+/* ── SIG BLOCK ── */
+.sig-block {
+  border-top: 1px solid rgba(0,200,212,0.2);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+.sig-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.sig-name { font-size: 14px; font-weight: 600; }
+.sig-title { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.sig-field {
+  flex: 1;
+  border-bottom: 1px solid rgba(0,200,212,0.3);
+  height: 32px;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4px;
+}
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box {
+  background: rgba(0,200,212,0.06);
+  border: 1px solid rgba(0,200,212,0.25);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  font-style: italic;
+  color: rgba(208,232,248,0.9);
+}
+
+/* ── KEY/VALUE ── */
+.kv-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,200,212,0.08);
+}
+.kv-key {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 140px;
+  margin-top: 2px;
+}
+.kv-val { font-size: 13px; line-height: 1.5; }
+
+/* ── CHECKLIST ── */
+.check-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.check-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+.check-text { font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<div class="deck" id="deck">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 01 — TITLE
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide active" data-slide="1">
+  <div class="bg-glow" style="width:600px;height:600px;background:radial-gradient(circle,rgba(0,200,212,0.08),transparent);top:-100px;left:-100px;"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,160,0.06),transparent);bottom:-50px;right:0;"></div>
+
+  <div class="groan-logo">GROAN</div>
+  <div style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:12px 0 32px;">Global Reef &amp; Ocean Analytics Network</div>
+
+  <div style="font-family:'Playfair Display',serif;font-size:clamp(18px,2.5vw,28px);color:#e8f4ff;text-align:center;max-width:700px;line-height:1.3;margin-bottom:32px;">
+    Caribbean Reef Intelligence Coalition<br>
+    <span style="font-weight:300;font-size:0.75em;color:var(--muted);">Partner Consortium — First Call</span>
+  </div>
+
+  <div class="grid3" style="max-width:700px;margin-bottom:40px;">
+    <div class="partner-badge" style="background:rgba(26,107,74,0.12);border-color:rgba(26,107,74,0.4);">
+      <span class="partner-emoji">🪸</span>
+      <div>
+        <div class="partner-name" style="color:#4fc3a1;">Dr. Melanie McField</div>
+        <div class="partner-sub">Healthy Reefs / HRI</div>
+      </div>
+    </div>
+    <div class="partner-badge" style="background:rgba(74,26,122,0.12);border-color:rgba(74,26,122,0.4);">
+      <span class="partner-emoji">🌊</span>
+      <div>
+        <div class="partner-name" style="color:#9b6fd4;">Gaby Nava</div>
+        <div class="partner-sub">Oceanus A.C.</div>
+      </div>
+    </div>
+    <div class="partner-badge" style="background:rgba(122,74,26,0.12);border-color:rgba(122,74,26,0.4);">
+      <span class="partner-emoji">🐢</span>
+      <div>
+        <div class="partner-name" style="color:#d4934a;">Héctor Lizárraga</div>
+        <div class="partner-sub">CEA Akumal</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;">
+    Daniel Roe · Nevado Ranch Camp LLC · May 2026 · Confidential
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 02 — AGENDA
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="2">
+  <div style="width:100%;max-width:800px;">
+    <div class="slide-label">Today's Call</div>
+    <div class="slide-title" style="font-size:clamp(28px,4vw,44px);">60 Minutes.<br>One Goal.</div>
+    <div class="accent-line" style="background:linear-gradient(90deg,var(--accent),var(--accent2));"></div>
+
+    <div style="margin-top:8px;">
+      <div class="agenda-item highlight">
+        <div class="agenda-time">0:00</div>
+        <div><div class="agenda-title">Why We're Here</div><div class="agenda-sub">The opportunity — what we can do together that none of us can do alone</div></div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-time">0:08</div>
+        <div><div class="agenda-title">GROAN — Quick Refresh</div><div class="agenda-sub">Platform status, 11 live data sources, Decision Score engine</div></div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-time">0:18</div>
+        <div><div class="agenda-title">What Each Partner Gets</div><div class="agenda-sub">Specific value for HRI, Oceanus, and CEA — no generic pitch</div></div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-time">0:32</div>
+        <div><div class="agenda-title">Live Platform Demo</div><div class="agenda-sub">Decision Score in action — real MAR data, real cascade signals</div></div>
+      </div>
+      <div class="agenda-item">
+        <div class="agenda-time">0:44</div>
+        <div><div class="agenda-title">The MOU — Walk Through Together</div><div class="agenda-sub">Equity, roles, data ownership, IP terms — plain language</div></div>
+      </div>
+      <div class="agenda-item highlight">
+        <div class="agenda-time">0:54</div>
+        <div><div class="agenda-title">Questions + Next Steps</div><div class="agenda-sub">Goal: leave this call with a path to signatures</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 03 — THE OPPORTUNITY
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="3">
+  <div class="bg-glow" style="width:500px;height:500px;background:radial-gradient(circle,rgba(0,200,212,0.07),transparent);top:0;right:0;"></div>
+  <div style="width:100%;max-width:900px;">
+    <div class="slide-label">Why We're Here</div>
+    <div class="slide-title" style="font-size:clamp(26px,3.5vw,42px);">The MAR is in trouble.<br>The data exists.<br>The decisions are still wrong.</div>
+    <div class="accent-line" style="background:var(--warn);"></div>
+
+    <div class="grid3" style="margin-top:16px;">
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:8px;">📊</div>
+        <h3 style="color:var(--accent);">The data problem</h3>
+        <p>HRI surveys every two years. CEA monitors Akumal Bay. Oceanus tracks 18 restoration sites. <strong>None of it talks to each other.</strong></p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:8px;">🔗</div>
+        <h3 style="color:var(--accent2);">The connection problem</h3>
+        <p>Mangrove loss drives seagrass turbidity drives reef algae. <strong>We know this. We can't prove it. We can't act on it.</strong> Not yet.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:8px;">⚡</div>
+        <h3 style="color:var(--gold);">The decision problem</h3>
+        <p>Every intervention decision is made on incomplete information. <strong>GROAN fixes that</strong> — but only with your data in it.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top:20px;">
+      "The coral reef ecologist monitors only the reef — and prescribes reef-specific interventions. Meanwhile the cause is 20 kilometres upstream in a mangrove system nobody is watching."
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:normal;font-family:'DM Mono',monospace;">— GROAN Thesis Chapter 1, April 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 04 — PLATFORM STATUS
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="4">
+  <div style="width:100%;max-width:900px;">
+    <div class="slide-label">Platform Status — May 2026</div>
+    <div class="slide-title" style="font-size:clamp(24px,3vw,38px);">GROAN is built.<br>11 of 12 data sources live.</div>
+    <div class="accent-line" style="background:linear-gradient(90deg,var(--accent),var(--accent2));"></div>
+
+    <div class="grid4" style="margin-bottom:20px;">
+      <div class="stat-block">
+        <div class="stat-number">73</div>
+        <div class="stat-label">Data Transform Interfaces</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-number">11</div>
+        <div class="stat-label">Live Data Sources</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Intelligence Modules</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-number">5,444</div>
+        <div class="stat-label">km² Reef Mapped (ACA)</div>
+      </div>
+    </div>
+
+    <div class="module-row">
+      <div class="module-pill" style="background:rgba(224,85,85,0.1);border-color:rgba(224,85,85,0.4);color:var(--grin);">GRIN — Reef</div>
+      <div class="module-pill" style="background:rgba(74,159,212,0.1);border-color:rgba(74,159,212,0.4);color:var(--gkin);">GKIN — Kinetics</div>
+      <div class="module-pill" style="background:rgba(79,195,161,0.1);border-color:rgba(79,195,161,0.4);color:var(--gsin);">GSIN — Seagrass</div>
+      <div class="module-pill" style="background:rgba(91,170,110,0.1);border-color:rgba(91,170,110,0.4);color:var(--gmin);">GMIN — Mangrove</div>
+      <div class="module-pill" style="background:rgba(240,160,64,0.1);border-color:rgba(240,160,64,0.4);color:var(--gmain);">GMAIN — Marine Animals</div>
+      <div class="module-pill" style="background:rgba(180,120,220,0.1);border-color:rgba(180,120,220,0.4);color:#c080e0;">GQIN — Water Quality</div>
+      <div class="module-pill" style="background:rgba(240,192,64,0.1);border-color:rgba(240,192,64,0.4);color:var(--gold);">GPOLIN — Pollution</div>
+    </div>
+
+    <div style="margin-top:16px;padding:14px 18px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:8px;font-size:13px;line-height:1.6;">
+      <strong style="color:var(--accent2);">What just went live this week:</strong> Allen Coral Atlas integration (Source 006) — 5,444 km² of reef habitat mapped across the full Rim Run Caribe corridor. Benthic, geomorphic, and reef extent data now feeding GRIN and GSIN in real time. No local files. Live API.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 05 — THE DECISION SCORE
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="5">
+  <div class="bg-glow" style="width:400px;height:400px;background:radial-gradient(circle,rgba(240,192,64,0.06),transparent);bottom:0;right:0;"></div>
+  <div style="width:100%;max-width:860px;">
+    <div class="slide-label">The Core Output</div>
+    <div class="slide-title" style="font-size:clamp(24px,3vw,38px);">The Decision Score.<br>Not just a map. A recommendation.</div>
+    <div class="accent-line" style="background:var(--gold);"></div>
+
+    <div style="text-align:center;margin:20px 0;">
+      <div style="font-family:'DM Mono',monospace;font-size:clamp(14px,2vw,20px);color:var(--gold);letter-spacing:1px;">
+        DS = α·E[Benefit] − β·Risk − γ·Cost + δ·Feasibility
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr style="border-bottom:1px solid rgba(0,200,212,0.15);">
+            <th style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:8px 10px;text-align:left;letter-spacing:1px;">DS RANGE</th>
+            <th style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:8px 10px;text-align:left;letter-spacing:1px;">STATE</th>
+            <th style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);padding:8px 10px;text-align:left;letter-spacing:1px;">ACTION</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,85,102,0.1);">
+            <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:#ff5566;">0.80–1.00</td>
+            <td style="padding:8px 10px;font-size:12px;">Critical</td>
+            <td style="padding:8px 10px;font-size:12px;">Deploy within 72h</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,138,64,0.1);">
+            <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--warn);">0.60–0.79</td>
+            <td style="padding:8px 10px;font-size:12px;">High Priority</td>
+            <td style="padding:8px 10px;font-size:12px;">Plan in 2–4 weeks</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(240,192,64,0.1);">
+            <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--gold);">0.40–0.59</td>
+            <td style="padding:8px 10px;font-size:12px;">Moderate</td>
+            <td style="padding:8px 10px;font-size:12px;">Increase frequency</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(0,229,160,0.1);">
+            <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);">0.20–0.39</td>
+            <td style="padding:8px 10px;font-size:12px;">Low Priority</td>
+            <td style="padding:8px 10px;font-size:12px;">Standard schedule</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">0.00–0.19</td>
+            <td style="padding:8px 10px;font-size:12px;">Minimal Action</td>
+            <td style="padding:8px 10px;font-size:12px;">Maintain protocol</td>
+          </tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card" style="border-color:rgba(240,192,64,0.2);">
+          <h3 style="color:var(--gold);font-size:14px;">Why this matters for your work</h3>
+          <p>A high DS doesn't mean the reef is dying. It means <strong>a high-value intervention opportunity exists right now</strong> — and GROAN can tell you exactly what it is and why.</p>
+        </div>
+        <div class="card" style="border-color:rgba(0,200,212,0.2);">
+          <h3 style="color:var(--accent);font-size:14px;">The cascade signal</h3>
+          <p>Low GMIN + Low GRIN at the same site = the reef is being undermined by mangrove loss upstream. <strong>No single-ecosystem system sees that.</strong> GROAN does.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 06 — WHAT HRI GETS
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="6">
+  <div style="width:100%;max-width:860px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="font-size:28px;">🪸</span>
+      <div>
+        <div class="slide-label" style="margin:0;">Dr. Melanie McField · Healthy Reefs / HRI</div>
+        <div style="font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,34px);color:#4fc3a1;font-weight:700;">What GROAN does for HRI</div>
+      </div>
+    </div>
+    <div class="accent-line" style="background:var(--hri);"></div>
+
+    <div class="grid2">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="check-item">
+          <div class="check-icon">📅</div>
+          <div class="check-text"><strong>Fills the gap between Report Cards.</strong> GROAN generates near-real-time reef condition across all four MAR countries between your biennial surveys. The data gap disappears.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">🔗</div>
+          <div class="check-text"><strong>Explains the grade.</strong> HRI's Report Card tells you a reef got a C. GROAN's CMIE tells you why — mangrove loss upstream, herbivore deficit, nutrient loading — in a causal chain.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">⚠️</div>
+          <div class="check-text"><strong>SCTLD corridor tracking.</strong> Continuous movement through the MAR generates an early-warning disease spread record that no stationary program currently produces.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">🗺️</div>
+          <div class="check-text"><strong>261 sites already in GROAN.</strong> HRI/AGRRA is Source 011 — already live. Your data is already flowing. This formalizes that connection and adds the cross-ecosystem layer.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="border-color:rgba(79,195,161,0.3);">
+          <h3 style="color:var(--gsin);">Your ask from HRI</h3>
+          <ul>
+            <li>Notify GROAN when new AGRRA cycles complete</li>
+            <li>Share Report Card outputs for benchmark integration</li>
+            <li>Review GROAN DS vs your expert assessment — log disagreements</li>
+            <li>Quarterly Steering Committee participation</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(79,195,161,0.15);">
+          <h3 style="color:var(--gsin);font-size:13px;">Publication sequence</h3>
+          <p>Joint Paper 1: GROAN Decision Score validation against HRI Report Card grades — the disagreements are the findings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 07 — WHAT OCEANUS GETS
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="7">
+  <div style="width:100%;max-width:860px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="font-size:28px;">🌊</span>
+      <div>
+        <div class="slide-label" style="margin:0;">Gaby Nava · Oceanus A.C.</div>
+        <div style="font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,34px);color:#9b6fd4;font-weight:700;">What GROAN does for Oceanus</div>
+      </div>
+    </div>
+    <div class="accent-line" style="background:var(--oceanus);"></div>
+
+    <div class="grid2">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="check-item">
+          <div class="check-icon">🎯</div>
+          <div class="check-text"><strong>Restoration Decision Scores.</strong> GROAN's DMAP-CAL engine recommends which site, which species, which technique — informed by all seven modules simultaneously, not just water temp and coral cover.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">🦠</div>
+          <div class="check-text"><strong>SCTLD advance mapping.</strong> GROAN identifies which restoration sites are at highest near-term disease risk and in what sequence — before your team schedules the next nursery visit.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">📈</div>
+          <div class="check-text"><strong>Transplant survival correlation.</strong> GROAN connects outplant survival rates to the water quality, current regime, and thermal history at each specific site. Know why transplants fail — not just that they did.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">⛵</div>
+          <div class="check-text"><strong>Rim Run coverage.</strong> Shamrocket can reach every active Oceanus site — Xcalak, Banco Chinchorro, Veracruz. MOOP health checks between your scheduled visits.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="border-color:rgba(155,111,212,0.3);">
+          <h3 style="color:#9b6fd4;">Your ask from Oceanus</h3>
+          <ul>
+            <li>Register active restoration + nursery sites</li>
+            <li>Submit post-transplant surveys via GROAN FSF</li>
+            <li>Critical DTIs: CORAL_COVER_PCT, JUVENILE_CORAL_DENSITY_M2, SUCCESSION_STAGE, outplant survival</li>
+            <li>Validate DMAP-CAL recommendations against field reality</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(155,111,212,0.15);">
+          <h3 style="color:#9b6fd4;font-size:13px;">The cascade example</h3>
+          <p>GMIN detects mangrove buffer loss → GROAN flags elevated sediment at nearby restoration sites → DMAP-CAL adjusts transplant species recommendation. Oceanus acts on causal intelligence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 08 — WHAT CEA GETS
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="8">
+  <div style="width:100%;max-width:860px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <span style="font-size:28px;">🐢</span>
+      <div>
+        <div class="slide-label" style="margin:0;">Héctor Lizárraga · CEA Akumal</div>
+        <div style="font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,34px);color:#d4934a;font-weight:700;">What GROAN does for CEA</div>
+      </div>
+    </div>
+    <div class="accent-line" style="background:var(--cea);"></div>
+
+    <div class="grid2">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="check-item">
+          <div class="check-icon">🌍</div>
+          <div class="check-text"><strong>Regional context for local data.</strong> CEA's Akumal Bay data is exceptional. GROAN puts it in a corridor-wide context — so you can see whether Akumal is representative, anomalous, or ahead of a trend.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">🐢</div>
+          <div class="check-text"><strong>Turtle–seagrass–reef chain, quantified.</strong> CEA already understands this relationship intuitively. GROAN's CMIE expresses it as a measurable, publishable causal chain through GMAIN and GSIN.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">🦁</div>
+          <div class="check-text"><strong>Lionfish data integrated.</strong> Every lionfish density reading from CEA dives feeds GROAN's GMAIN trophic model. GROAN tells you where lionfish pressure is highest on the DS — prioritize your hunters.</div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon">💧</div>
+          <div class="check-text"><strong>Water quality → reef health pathway.</strong> GROAN connects CEA's water quality readings directly to reef condition forecasts. Know what's coming for Akumal Bay before it arrives.</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="border-color:rgba(212,147,74,0.3);">
+          <h3 style="color:#d4934a;">Your ask from CEA</h3>
+          <ul>
+            <li>Register active monitoring sites (fore reef + back reef)</li>
+            <li>Submit FSF after each dive</li>
+            <li>Critical DTIs: CORAL_COVER_PCT, HERBIVORE_BIOMASS_KG_HA, REEF_BLEACHING_PCT, LIONFISH_DENSITY_100M2, SCTLD_PREVALENCE_PCT, WATER_TEMP_C</li>
+            <li>Compare GROAN DS to expert judgment — log disagreements</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(212,147,74,0.15);">
+          <h3 style="color:#d4934a;font-size:13px;">LMIC anchor value</h3>
+          <p>CEA's Mexico presence makes this consortium a legitimate LMIC partnership — critical for grant applications, government facilitation, and regional credibility.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 09 — CONSORTIUM STRUCTURE
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="9">
+  <div style="width:100%;max-width:860px;">
+    <div class="slide-label">The Deal</div>
+    <div class="slide-title" style="font-size:clamp(24px,3vw,38px);">Simple structure.<br>Fair terms. Full transparency.</div>
+    <div class="accent-line" style="background:linear-gradient(90deg,var(--accent),var(--gold));"></div>
+
+    <div class="grid2" style="margin-top:16px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">Revenue Split</div>
+        <div class="equity-row" style="background:rgba(26,74,122,0.15);">
+          <div class="equity-name">Nevado Ranch Camp LLC</div>
+          <div class="equity-bar-wrap"><div class="equity-bar" style="width:51%;background:var(--accent);"></div></div>
+          <div class="equity-pct" style="color:var(--accent);">51%</div>
+        </div>
+        <div class="equity-row" style="background:rgba(26,107,74,0.12);">
+          <div class="equity-name">Healthy Reefs / HRI</div>
+          <div class="equity-bar-wrap"><div class="equity-bar" style="width:16.3%;background:var(--gsin);"></div></div>
+          <div class="equity-pct" style="color:var(--gsin);">16.3%</div>
+        </div>
+        <div class="equity-row" style="background:rgba(74,26,122,0.12);">
+          <div class="equity-name">Oceanus A.C.</div>
+          <div class="equity-bar-wrap"><div class="equity-bar" style="width:16.3%;background:#9b6fd4;"></div></div>
+          <div class="equity-pct" style="color:#9b6fd4;">16.3%</div>
+        </div>
+        <div class="equity-row" style="background:rgba(122,74,26,0.12);">
+          <div class="equity-name">CEA Akumal</div>
+          <div class="equity-bar-wrap"><div class="equity-bar" style="width:16.3%;background:#d4934a;"></div></div>
+          <div class="equity-pct" style="color:#d4934a;">16.3%</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:8px;">Commercial revenue only. Internal research use = always free.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="kv-row">
+          <div class="kv-key">IP Ownership</div>
+          <div class="kv-val">All GROAN platform IP owned by NRCL. Partners receive perpetual free license for internal research.</div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">Your Data</div>
+          <div class="kv-val">Field data submitted by each org stays owned by that org. GROAN holds a license to process and publish <em>aggregate outputs only</em>.</div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">Publications</div>
+          <div class="kv-val">Co-authorship on all joint papers. First paper within 18 months of first data submission.</div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">Governance</div>
+          <div class="kv-val">Quarterly Steering Committee. NRCL holds chair. Majority vote on publications and methodology.</div>
+        </div>
+        <div class="kv-row" style="border:none;">
+          <div class="kv-key">Term</div>
+          <div class="kv-val">2 years, auto-renewing. 90-day exit notice. Clean exit terms — no lock-in.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 10 — THE MOU
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="10">
+  <div style="width:100%;max-width:860px;">
+    <div class="slide-label">The Agreement</div>
+    <div class="slide-title" style="font-size:clamp(22px,2.8vw,36px);">The MOU — seven articles.<br>Plain language. No surprises.</div>
+    <div class="accent-line" style="background:var(--gold);"></div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div>
+        <table class="mou-table">
+          <tr><th>Article</th><th>What It Covers</th></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 1</td><td>Purpose &amp; Scope — validation, joint data, publications, commercial deployment</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 2</td><td>IP — Background IP stays with NRCL. Your data stays yours.</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 3</td><td>Profit Sharing — 51/16.3/16.3/16.3 on commercial revenue only</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 4</td><td>Commitments — what each party does (practical, achievable)</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 5</td><td>Governance — Steering Committee, quarterly calls, decision rights</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 6</td><td>Term &amp; Termination — 2-year term, clean exit, 90-day notice</td></tr>
+          <tr><td style="color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;">Art. 7</td><td>General — Arizona law, no partnership, severability</td></tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="highlight-box" style="margin:0;">
+          "Nothing in this Agreement creates a partnership, joint venture, or employment relationship between the Parties."
+          <div style="font-size:11px;margin-top:6px;font-style:normal;font-family:'DM Mono',monospace;color:var(--muted);">Article 7.3</div>
+        </div>
+        <div class="card" style="border-color:rgba(240,192,64,0.25);">
+          <h3 style="color:var(--gold);font-size:13px;">What happens after signatures</h3>
+          <ul>
+            <li>Site registrations open immediately</li>
+            <li>Data Governance Agreement sent within 5 days</li>
+            <li>First FSF submission target: 30 days</li>
+            <li>First Steering Committee call: 60 days</li>
+          </ul>
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;text-align:center;padding:8px;">
+          Full MOU document shared in this call's follow-up email
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SLIDE 11 — NEXT STEPS
+══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-slide="11">
+  <div class="bg-glow" style="width:600px;height:600px;background:radial-gradient(circle,rgba(0,229,160,0.07),transparent);bottom:-100px;left:50%;transform:translateX(-50%);"></div>
+  <div style="width:100%;max-width:800px;text-align:center;">
+    <div class="slide-label" style="text-align:center;align-self:center;">Let's Do This</div>
+    <div class="slide-title" style="font-size:clamp(28px,4vw,52px);text-align:center;">The reef doesn't wait.<br>Neither should we.</div>
+    <div class="accent-line" style="background:linear-gradient(90deg,var(--accent),var(--accent2));margin:20px auto;"></div>
+
+    <div class="timeline" style="margin:24px 0;">
+      <div class="tl-item active-tl">
+        <div class="tl-time">TODAY</div>
+        <div class="tl-title">MOU Signatures</div>
+        <div class="tl-desc">All four parties sign. Consortium is live.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">+5 DAYS</div>
+        <div class="tl-title">Data Governance</div>
+        <div class="tl-desc">DGA sent and signed by each partner</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">+2 WEEKS</div>
+        <div class="tl-title">Site Registration</div>
+        <div class="tl-desc">All active sites registered in GROAN</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">+30 DAYS</div>
+        <div class="tl-title">First Submission</div>
+        <div class="tl-desc">First FSF data into GROAN. First DS generated.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">+60 DAYS</div>
+        <div class="tl-title">Steering Call</div>
+        <div class="tl-desc">First consortium coordination call</div>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="text-align:left;max-width:700px;margin:0 auto;">
+      "My intent is simple — to put every capability I bring in service of enhancing what each partner is already doing, at every opportunity along the way."
+      <div style="font-size:11px;margin-top:6px;font-style:normal;font-family:'DM Mono',monospace;color:var(--muted);">— Daniel Roe, Nevado Ranch Camp LLC</div>
+    </div>
+
+    <div style="margin-top:24px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;">
+      GROAN™ · Nevado Ranch Camp LLC · catamarandan.org · data@groan.io
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>←</button>
+  <div class="nav-dots" id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 11</span>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">→</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let current = 0;
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+
+function goTo(n) {
+  slides[current].classList.remove('active');
+  dotsEl.children[current].classList.remove('active');
+  current = Math.max(0, Math.min(n, total - 1));
+  slides[current].classList.add('active');
+  dotsEl.children[current].classList.add('active');
+  document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === total - 1;
+  document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+}
+
+function navigate(dir) { goTo(current + dir); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); navigate(-1); }
+});
+
+// Init progress
+document.getElementById('progress').style.width = `${(1/total)*100}%`;
+</script>
+</body>
+</html>
