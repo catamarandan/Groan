@@ -1,0 +1,371 @@
+/**
+ * GROAN™ — Source 006: Allen Coral Atlas Integration Module
+ * Global Reef & Ocean Analytics Network
+ * Nevado Ranch Camp LLC | © 2026 All Rights Reserved
+ *
+ * Strategy: Fetch ACA tile/API data at runtime — no local GeoJSON files required.
+ * Falls back to cached summary stats when API is unavailable.
+ *
+ * AOI: Rim Run Caribe corridor — Yucatan, Belize, Guatemala, Honduras
+ * Bbox: lon -92.0 to -83.0, lat 14.0 to 22.0
+ *
+ * DTIs fed by this module:
+ *   CORAL_COVER_PCT        → benthic class: Coral/Algae
+ *   SEAGRASS_COVER_PCT     → benthic class: Seagrass
+ *   BARE_SUBSTRATE_PCT     → benthic class: Sand + Rubble + Rock
+ *   REEF_GEOMORPH_CLASS    → geomorphic classification at site
+ *   REEF_EXTENT_KM2        → total reef extent in AOI
+ *   ACA_CONFIDENCE_SCORE   → per-pixel confidence from ACA
+ *
+ * Geomorphic classes in AOI:
+ *   Reef Slope, Sheltered Reef Slope, Reef Crest, Outer Reef Flat,
+ *   Inner Reef Flat, Back Reef Slope, Shallow Lagoon, Deep Lagoon,
+ *   Plateau, Terrestrial Reef Flat
+ *
+ * Benthic classes in AOI:
+ *   Coral/Algae, Seagrass, Sand, Rubble, Rock, Microalgal Mats
+ */
+ 
+(function () {
+  'use strict';
+ 
+  // ─── CONFIGURATION ──────────────────────────────────────────────────────────
+ 
+  const ACA_CONFIG = {
+    source_id: '006',
+    source_name: 'Allen Coral Atlas',
+    version: '2.0',
+    citation: 'Allen Coral Atlas (2022). Imagery, maps and monitoring of the world\'s tropical coral reefs. doi:10.5281/zenodo.3833242',
+ 
+    // Rim Run Caribe AOI bounding box
+    aoi: {
+      minLon: -92.0,
+      maxLon: -83.0,
+      minLat:  14.0,
+      maxLat:  22.0,
+      label: 'Rim Run Caribe — MAR Corridor'
+    },
+ 
+    // ACA public endpoints
+    endpoints: {
+      // Tile map service — returns reef habitat tiles for map display
+      tileBase: 'https://allencoralatlas.org/tiles',
+      // Stats API — returns summary statistics for a drawn polygon/bbox
+      statsApi: 'https://api.allencoralatlas.org/stats',
+      // Bleaching monitoring API
+      bleachingApi: 'https://api.allencoralatlas.org/bleaching',
+      // Site query — benthic/geomorphic class at a lat/lon point
+      pointQuery: 'https://api.allencoralatlas.org/reef',
+    },
+ 
+    // Tile layer IDs for map display
+    tiles: {
+      benthic:    'benthic',
+      geomorphic: 'geomorphic',
+      reefExtent: 'reef-extent',
+      bleaching:  'bleaching',
+    },
+ 
+    // AOI summary stats from downloaded GeoJSON (May 2026 snapshot)
+    // Used as fallback when API is unavailable
+    aoi_stats_cache: {
+      reef_extent_km2: 5444.28,
+      benthic: {
+        'Coral/Algae':     { fraction: 0.2684, km2: 1055.82 },
+        'Seagrass':        { fraction: 0.3194, km2: 1256.46 },
+        'Sand':            { fraction: 0.1986, km2:  781.37 },
+        'Rubble':          { fraction: 0.1137, km2:  447.16 },
+        'Rock':            { fraction: 0.0732, km2:  287.93 },
+        'Microalgal Mats': { fraction: 0.0267, km2:  105.19 },
+      },
+      geomorphic: {
+        'Deep Lagoon':          { fraction: 0.3227, km2: 1542.20 },
+        'Shallow Lagoon':       { fraction: 0.1852, km2:  885.13 },
+        'Outer Reef Flat':      { fraction: 0.1348, km2:  644.36 },
+        'Inner Reef Flat':      { fraction: 0.0997, km2:  476.74 },
+        'Back Reef Slope':      { fraction: 0.0934, km2:  446.57 },
+        'Reef Slope':           { fraction: 0.0710, km2:  339.28 },
+        'Plateau':              { fraction: 0.0408, km2:  194.89 },
+        'Terrestrial Reef Flat':{ fraction: 0.0273, km2:  130.49 },
+        'Sheltered Reef Slope': { fraction: 0.0196, km2:   93.54 },
+        'Reef Crest':           { fraction: 0.0056, km2:   26.56 },
+      },
+      snapshot_date: '2026-05-17',
+    }
+  };
+ 
+  // ─── GEOMORPHIC CLASS → GROAN SITE TYPE MAPPING ─────────────────────────────
+ 
+  const GEOMORPH_TO_SITE_TYPE = {
+    'Reef Slope':            'FORE',
+    'Sheltered Reef Slope':  'FORE',
+    'Reef Crest':            'CREST',
+    'Outer Reef Flat':       'BACK',
+    'Inner Reef Flat':       'BACK',
+    'Back Reef Slope':       'BACK',
+    'Shallow Lagoon':        'BACK',
+    'Deep Lagoon':           'BACK',
+    'Plateau':               'FORE',
+    'Terrestrial Reef Flat': 'BACK',
+  };
+ 
+  // ─── BENTHIC CLASS → GROAN DTI MAPPING ──────────────────────────────────────
+ 
+  const BENTHIC_TO_DTI = {
+    'Coral/Algae':     'CORAL_COVER_PCT',
+    'Seagrass':        'SEAGRASS_COVER_PCT',
+    'Sand':            'BARE_SUBSTRATE_PCT',
+    'Rubble':          'BARE_SUBSTRATE_PCT',
+    'Rock':            'BARE_SUBSTRATE_PCT',
+    'Microalgal Mats': 'ALGAE_COVER_PCT',
+  };
+ 
+  // ─── CORE FUNCTIONS ──────────────────────────────────────────────────────────
+ 
+  /**
+   * Query ACA for benthic + geomorphic class at a specific lat/lon.
+   * This is the primary function called per GROAN site node.
+   *
+   * @param {number} lat - Latitude
+   * @param {number} lon - Longitude
+   * @returns {Promise<Object>} GROAN-formatted DTI object
+   */
+  async function queryPointDTI(lat, lon) {
+    const url = `${ACA_CONFIG.endpoints.pointQuery}?lat=${lat}&lon=${lon}`;
+    try {
+      const resp = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!resp.ok) throw new Error(`ACA API ${resp.status}`);
+      const data = await resp.json();
+      return formatPointDTI(lat, lon, data);
+    } catch (err) {
+      console.warn(`[ACA-006] Point query failed for ${lat},${lon}:`, err.message);
+      return null;
+    }
+  }
+ 
+  /**
+   * Format ACA point response into GROAN Canonical Data Object.
+   */
+  function formatPointDTI(lat, lon, acaData) {
+    const benthicClass   = acaData.benthic   || acaData.benthic_class   || null;
+    const geomorphClass  = acaData.geomorphic || acaData.geomorphic_class || null;
+    const confidence     = acaData.confidence || acaData.score           || null;
+    const siteType       = GEOMORPH_TO_SITE_TYPE[geomorphClass]          || 'FORE';
+    const dtiKey         = BENTHIC_TO_DTI[benthicClass]                  || null;
+ 
+    const ts = new Date().toISOString();
+ 
+    return {
+      Source_ID:        'ACA-006',
+      Source_Name:      'Allen Coral Atlas',
+      Timestamp:        ts,
+      Latitude:         lat,
+      Longitude:        lon,
+      Method:           'remote_sensing_5m',
+      Collector_Type:   'satellite',
+      Confidence_Score: confidence || 0.75,
+      ACA_Version:      ACA_CONFIG.version,
+ 
+      // Raw ACA classes
+      ACA_Benthic_Class:    benthicClass,
+      ACA_Geomorph_Class:   geomorphClass,
+      GROAN_Site_Type:      siteType,
+ 
+      // GROAN DTI outputs
+      dtis: {
+        REEF_GEOMORPH_CLASS: geomorphClass,
+        ACA_CONFIDENCE_SCORE: confidence,
+        ...(dtiKey && { [dtiKey]: 1.0 }),  // presence flag — 1 = class present at point
+      },
+ 
+      // DMAP-CAL routing
+      dmap_cal_parameter: 'alpha',  // feeds benefit component
+      voi_flag: confidence !== null && confidence < 0.70,
+    };
+  }
+ 
+  /**
+   * Get AOI-level benthic statistics.
+   * Tries live API first, falls back to cached snapshot.
+   *
+   * @param {Object} bbox - { minLon, maxLon, minLat, maxLat }
+   * @returns {Promise<Object>} benthic stats formatted as GROAN DTIs
+   */
+  async function getAOIStats(bbox) {
+    const b = bbox || ACA_CONFIG.aoi;
+    const url = `${ACA_CONFIG.endpoints.statsApi}?bbox=${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}`;
+ 
+    try {
+      const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) throw new Error(`ACA Stats API ${resp.status}`);
+      const data = await resp.json();
+      return formatAOIStats(data, 'api');
+    } catch (err) {
+      console.warn('[ACA-006] Stats API unavailable — using cached snapshot:', err.message);
+      return formatAOIStats(ACA_CONFIG.aoi_stats_cache, 'cache');
+    }
+  }
+ 
+  /**
+   * Format AOI stats into GROAN DTI structure.
+   */
+  function formatAOIStats(stats, source) {
+    const benthic = stats.benthic || {};
+    const geo     = stats.geomorphic || {};
+ 
+    const coralFraction    = (benthic['Coral/Algae']     || {}).fraction || 0;
+    const seagrassFraction = (benthic['Seagrass']        || {}).fraction || 0;
+    const sandFraction     = (benthic['Sand']            || {}).fraction || 0;
+    const rubbleFraction   = (benthic['Rubble']          || {}).fraction || 0;
+    const rockFraction     = (benthic['Rock']            || {}).fraction || 0;
+    const algaeFraction    = (benthic['Microalgal Mats'] || {}).fraction || 0;
+ 
+    return {
+      Source_ID:    'ACA-006',
+      Source_Name:  'Allen Coral Atlas',
+      Timestamp:    new Date().toISOString(),
+      Data_Source:  source,
+      AOI:          ACA_CONFIG.aoi.label,
+ 
+      dtis: {
+        REEF_EXTENT_KM2:    stats.reef_extent_km2 || 0,
+        CORAL_COVER_PCT:    +(coralFraction    * 100).toFixed(2),
+        SEAGRASS_COVER_PCT: +(seagrassFraction * 100).toFixed(2),
+        BARE_SUBSTRATE_PCT: +((sandFraction + rubbleFraction + rockFraction) * 100).toFixed(2),
+        ALGAE_COVER_PCT:    +(algaeFraction    * 100).toFixed(2),
+      },
+ 
+      geomorphic_breakdown: geo,
+      benthic_breakdown:    benthic,
+      snapshot_date:        stats.snapshot_date || new Date().toISOString().split('T')[0],
+    };
+  }
+ 
+  /**
+   * Get current bleaching alert status for the AOI.
+   * Feeds GROAN Alert Level system directly.
+   *
+   * @returns {Promise<Object>} bleaching alert object
+   */
+  async function getBleachingAlerts() {
+    const b = ACA_CONFIG.aoi;
+    const url = `${ACA_CONFIG.endpoints.bleachingApi}?bbox=${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}`;
+ 
+    try {
+      const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) throw new Error(`ACA Bleaching API ${resp.status}`);
+      const data = await resp.json();
+ 
+      return {
+        Source_ID:      'ACA-006',
+        alert_type:     'bleaching',
+        timestamp:      new Date().toISOString(),
+        alerts:         data.alerts || [],
+        alert_count:    (data.alerts || []).length,
+        // Map to GROAN alert levels
+        groan_alert_level: mapBleachingToGroanAlert(data),
+        raw: data,
+      };
+    } catch (err) {
+      console.warn('[ACA-006] Bleaching API unavailable:', err.message);
+      return { Source_ID: 'ACA-006', alert_type: 'bleaching', available: false };
+    }
+  }
+ 
+  /**
+   * Map ACA bleaching severity to GROAN alert level (1–4).
+   */
+  function mapBleachingToGroanAlert(bleachData) {
+    const maxSeverity = bleachData.max_severity || bleachData.severity || 0;
+    if (maxSeverity >= 4) return 4;  // Critical
+    if (maxSeverity >= 3) return 3;  // Alert
+    if (maxSeverity >= 2) return 2;  // Warning
+    if (maxSeverity >= 1) return 1;  // Watch
+    return 0;
+  }
+ 
+  /**
+   * Get tile URL for map display (Leaflet / Mapbox compatible).
+   *
+   * @param {'benthic'|'geomorphic'|'reefExtent'|'bleaching'} layer
+   * @returns {string} tile URL template
+   */
+  function getTileURL(layer) {
+    const layerId = ACA_CONFIG.tiles[layer] || 'reef-extent';
+    return `${ACA_CONFIG.endpoints.tileBase}/${layerId}/{z}/{x}/{y}.png`;
+  }
+ 
+  /**
+   * Check if a lat/lon point is within the Rim Run AOI.
+   */
+  function isInAOI(lat, lon) {
+    const b = ACA_CONFIG.aoi;
+    return lat >= b.minLat && lat <= b.maxLat && lon >= b.minLon && lon <= b.maxLon;
+  }
+ 
+  /**
+   * Main GROAN ingestion entry point.
+   * Called by the GROAN data pipeline (Stage 9 — Module Ingestion).
+   * Returns full Source 006 data package for the current AOI.
+   */
+  async function ingest() {
+    console.log('[ACA-006] Starting Allen Coral Atlas ingestion — AOI: Rim Run Caribe MAR');
+ 
+    const [aoi_stats, bleaching] = await Promise.all([
+      getAOIStats(),
+      getBleachingAlerts(),
+    ]);
+ 
+    const result = {
+      source_id:    '006',
+      source_name:  'Allen Coral Atlas',
+      ingest_time:  new Date().toISOString(),
+      aoi:          ACA_CONFIG.aoi,
+      aoi_stats,
+      bleaching,
+      tile_urls: {
+        benthic:    getTileURL('benthic'),
+        geomorphic: getTileURL('geomorphic'),
+        reefExtent: getTileURL('reefExtent'),
+        bleaching:  getTileURL('bleaching'),
+      },
+      citation: ACA_CONFIG.citation,
+      status: 'ok',
+    };
+ 
+    // Emit to GROAN pipeline
+    if (window.GROAN && window.GROAN.pipeline) {
+      window.GROAN.pipeline.receive('006', result);
+    }
+ 
+    console.log('[ACA-006] Ingestion complete:', {
+      reef_extent_km2: aoi_stats.dtis.REEF_EXTENT_KM2,
+      coral_cover_pct: aoi_stats.dtis.CORAL_COVER_PCT,
+      seagrass_cover_pct: aoi_stats.dtis.SEAGRASS_COVER_PCT,
+      bleaching_alert_level: bleaching.groan_alert_level,
+    });
+ 
+    return result;
+  }
+ 
+  // ─── PUBLIC API ──────────────────────────────────────────────────────────────
+ 
+  window.GROAN = window.GROAN || {};
+  window.GROAN.sources = window.GROAN.sources || {};
+  window.GROAN.sources['006'] = {
+    id:              '006',
+    name:            'Allen Coral Atlas',
+    ingest,
+    queryPointDTI,
+    getAOIStats,
+    getBleachingAlerts,
+    getTileURL,
+    isInAOI,
+    config:          ACA_CONFIG,
+  };
+ 
+  console.log('[ACA-006] Allen Coral Atlas module loaded — Source 006 ready');
+ 
+})();
